@@ -18,7 +18,7 @@ command_exists() {
 if ! command_exists uvicorn; then
   echo "uvicorn not found, installing..."
   pip3 install uvicorn
-  export PATH=$PATH:$(python3 -m site --user-base)/bin
+  export PATH=$PATH:$(python -m site --user-base)/bin
 fi
 
 # Set the PYTHONPATH to the current directory
