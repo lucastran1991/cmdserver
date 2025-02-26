@@ -25,4 +25,4 @@ fi
 export PYTHONPATH=$(pwd)/backend
 
 # Start the FastAPI server
-uvicorn app.main:app --host $HOST --port $PORT
+uvicorn "app.app:app" --host $HOST --port $PORT

@@ -30,4 +30,4 @@ if %errorlevel% neq 0 (
 set "PYTHONPATH=%cd%\backend"
 
 :: Start the FastAPI server
-uvicorn app.main:app --host %HOST% --port %PORT%
+uvicorn "app.app:app" --host %HOST% --port %PORT%
