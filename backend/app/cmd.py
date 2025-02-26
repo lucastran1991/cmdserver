@@ -4,8 +4,22 @@ from typing import List
 import subprocess
 import paramiko
 import os
+import json
+
+from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, models
+from fastapi_users.authentication import (
+    AuthenticationBackend,
+    BearerTransport,
+    JWTStrategy,
+)
 
 router = APIRouter()
+
+config_path = os.path.join(os.path.dirname(__file__), "../../config.json")
+with open(config_path) as config_file:
+    config = json.load(config_file)
+
+SECRET = config["secret_key"]
 
 class CMDString(BaseModel):
     server: str
@@ -169,3 +183,14 @@ async def execute_command(server: str, mode: str, commands: List[str]):
         "commands": commands,
         "server": server
     }
+
+def get_jwt_strategy() -> JWTStrategy[models.UP, models.ID]:
+    return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
+
+bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
+
+auth_backend = AuthenticationBackend(
+    name="jwt",
+    transport=bearer_transport,
+    get_strategy=get_jwt_strategy,
+)

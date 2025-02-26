@@ -1,5 +1,7 @@
 import uuid
 from typing import Optional
+import os
+import json
 
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, models
@@ -12,7 +14,11 @@ from fastapi_users.db import SQLAlchemyUserDatabase
 
 from app.db import User, get_user_db
 
-SECRET = "SECRET"
+config_path = os.path.join(os.path.dirname(__file__), "../../config.json")
+with open(config_path) as config_file:
+    config = json.load(config_file)
+
+SECRET = config["secret_key"]
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
