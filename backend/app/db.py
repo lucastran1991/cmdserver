@@ -1,11 +1,17 @@
 from collections.abc import AsyncGenerator
+import json
+import os
 
 from fastapi import Depends
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+config_path = os.path.join(os.path.dirname(__file__), "../../config.json")
+with open(config_path) as config_file:
+    config = json.load(config_file)
+    
+DATABASE_URL = f"sqlite+aiosqlite:///./backend/db/{config['db']['name']}.db"
 
 
 class Base(DeclarativeBase):
