@@ -3,7 +3,7 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, users
+from app.routes import auth, users, command
 
 config_path = os.path.join(os.path.dirname(__file__), "../../config.json")
 with open(config_path) as config_file:
@@ -21,6 +21,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(command.router)
 
 if __name__ == "__main__":
     import uvicorn
