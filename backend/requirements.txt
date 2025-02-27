@@ -7,3 +7,4 @@ sqlalchemy
 fastapi
 fastapi-users[sqlalchemy]
 aiosqlite
+paramiko

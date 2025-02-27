@@ -24,5 +24,8 @@ fi
 # Set the PYTHONPATH to the current directory
 export PYTHONPATH=$(pwd)/backend
 
+# Activate the virtual environment
+source venv/bin/activate
+
 # Start the FastAPI server
 uvicorn "app.app:app" --host $HOST --port $PORT
