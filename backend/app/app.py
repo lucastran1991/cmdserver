@@ -6,6 +6,7 @@ from app.db import User, create_db_and_tables
 from app.schemas import UserCreate, UserRead, UserUpdate
 from app.users import auth_backend, current_active_user, fastapi_users
 from app import cmd
+from app import target
 
 
 @asynccontextmanager
@@ -42,6 +43,12 @@ app.include_router(
 app.include_router(
     cmd.router,
     tags=["commands"],
+    dependencies=[Depends(current_active_user)]
+)
+
+app.include_router(
+    target.router,
+    tags=["targets"],
     dependencies=[Depends(current_active_user)]
 )
 
