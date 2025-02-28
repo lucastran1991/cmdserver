@@ -27,9 +27,9 @@ class Target(Base):
     __tablename__ = "target"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String, nullable=False, default="QA", unique=True)
+    name = Column(String, nullable=False, default="QA")
     description = Column(String, nullable=True)
-
+    server_tag = Column(String, nullable=False, default="QA.APP", unique=True)
     server_alias = Column(String, nullable=False, default="veodev")
     server_path = Column(String, nullable=False, default="/data2/Atomiton/WaterTRN/QA")
     server_port = Column(String, nullable=False, default="8686")
