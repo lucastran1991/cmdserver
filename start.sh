@@ -28,4 +28,15 @@ export PYTHONPATH=$(pwd)/backend
 source venv/bin/activate
 
 # Start the FastAPI server
-uvicorn "app.app:app" --host $HOST --port $PORT
+uvicorn "app.app:app" --host $HOST --port $PORT &
+
+# Start the Next.js UI
+cd frontend
+if ! command_exists npm; then
+  echo "npm not found, please install Node.js and npm."
+  exit 1
+fi
+
+npm run dev
+
+cd ..

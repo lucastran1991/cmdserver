@@ -29,5 +29,9 @@ if %errorlevel% neq 0 (
 :: Set the PYTHONPATH to the current directory
 set "PYTHONPATH=%cd%\backend"
 
-:: Start the FastAPI server
-uvicorn "app.app:app" --host %HOST% --port %PORT%
+:: Start the FastAPI server in a new window
+start cmd /k "set "PYTHONPATH=%cd%\backend" && uvicorn "app.app:app" --host %HOST% --port %PORT%"
+
+:: Start the frontend development server
+cd frontend
+npm run dev

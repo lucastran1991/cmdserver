@@ -1,13 +1,10 @@
 from contextlib import asynccontextmanager
-
 from fastapi import Depends, FastAPI
-
 from app.db import User, create_db_and_tables
 from app.schemas import UserCreate, UserRead, UserUpdate
 from app.users import auth_backend, current_active_user, fastapi_users
 from app import cmd
 from app import target
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -45,7 +42,6 @@ app.include_router(
     tags=["commands"],
     dependencies=[Depends(current_active_user)]
 )
-
 app.include_router(
     target.router,
     tags=["targets"],
