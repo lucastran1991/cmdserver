@@ -13,38 +13,32 @@ import {
 } from "@/components/ui/card"
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('admin@mail.com');
+  const [password, setPassword] = useState('admin');
+  const [loginError, setLoginError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!username || !password) {
+      console.error('Username and password are required');
+      setLoginError('Username and password are required');
+      return;
+    }
     try {
-      const formData = new URLSearchParams();
-      formData.append("username", username);
-      formData.append("password", password);
-      const response = await axios.post("http://localhost:8000/auth/jwt/login", formData, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      });
-      if (response.status !== 200) {
-        throw new Error('Network response was not ok');
-      }
-      const data = response.data;
-      console.log('Data:', data);
-      const { access_token, token_type } = data;
-      console.log('Access token:', access_token, 'Token type:', token_type);
       const result = await signIn('credentials', {
         redirect: false,
-        access_token,
+        username,
+        password
       });
       if (result?.error) {
         console.error(result.error);
       } else {
         console.log('Login successful');
+        setLoginError('');
       }
     } catch (error) {
       console.error('There was an error logging in:', error);
+      setLoginError('There was an error logging in');
     }
   };
 
@@ -76,6 +70,7 @@ const Login = () => {
                 required
               />
             </div>
+            {loginError && <p className="text-red-500">{loginError}</p>}
             <Button type="submit" className="w-full">Login</Button>
           </form>
         </CardContent>
