@@ -38,5 +38,3 @@ if ! command_exists npm; then
 fi
 
 npm run dev
-
-cd ..
