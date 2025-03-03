@@ -15,8 +15,8 @@ if not exist "%CONFIG_FILE%" (
   exit /b 1
 )
 
-for /f "delims=" %%i in ('jq -r ".host" "%CONFIG_FILE%"') do set "HOST=%%i"
-for /f "delims=" %%i in ('jq -r ".port" "%CONFIG_FILE%"') do set "PORT=%%i"
+for /f "delims=" %%i in ('jq -r ".backend.host" "%CONFIG_FILE%"') do set "HOST=%%i"
+for /f "delims=" %%i in ('jq -r ".backend.port" "%CONFIG_FILE%"') do set "PORT=%%i"
 
 :: Function to check if a command exists
 where /q uvicorn

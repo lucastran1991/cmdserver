@@ -7,4 +7,4 @@ with open(config_path) as config_file:
     config = json.load(config_file)
 
 if __name__ == "__main__":
-    uvicorn.run("app.app:app", host=config["host"], port=config["port"])
+    uvicorn.run("app.app:app", host=config["backend"]["host"], port=config["backend"]["port"])

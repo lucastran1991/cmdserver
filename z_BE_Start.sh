@@ -7,7 +7,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
   exit 1
 fi
 HOST=$(jq -r '.backend.host' $CONFIG_FILE)
-PORT=$(jq -r '.backend.host' $CONFIG_FILE)
+PORT=$(jq -r '.backend.port' $CONFIG_FILE)
 
 # Function to check if a command exists
 command_exists() {
@@ -28,13 +28,4 @@ export PYTHONPATH=$(pwd)/backend
 source venv/bin/activate
 
 # Start the FastAPI server
-uvicorn "app.app:app" --host $HOST --port $PORT &
-
-# Start the Next.js UI
-cd frontend
-if ! command_exists npm; then
-  echo "npm not found, please install Node.js and npm."
-  exit 1
-fi
-
-npm run dev
+uvicorn "app.app:app" --host $HOST --port $PORT

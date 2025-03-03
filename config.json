@@ -1,10 +1,17 @@
 {
-  "host": "localhost",
-  "port": 8000,
-  "db": {
+  "backend": {
     "host": "localhost",
-    "port": 27017,
-    "name": "sqlite_cmd"
+    "port": 8000,
+    "db": {
+      "host": "localhost",
+      "port": 27017,
+      "name": "sqlite_cmd"
+    },
+    "secret_key": "be_cmdserver"
   },
-  "secret_key": "cmdserver"
+  "frontend": {
+    "host": "localhost",
+    "port": 3000,
+    "secret_key": "fe_cmdserver"
+  }
 }
