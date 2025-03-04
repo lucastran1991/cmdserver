@@ -173,6 +173,7 @@ cython_debug/
 # Frontend build artifacts
 frontend/node_modules/
 frontend/.next/
+node_modules/
 
 # Shadcn-UI and Next.js specific
 .turbo
