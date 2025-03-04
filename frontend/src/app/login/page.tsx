@@ -24,6 +24,7 @@ const Login = () => {
       setLoginError('Username and password are required');
       return;
     }
+    console.log('Logging in...');
     try {
       const result = await signIn('credentials', {
         redirect: false,
@@ -70,7 +71,7 @@ const Login = () => {
                 required
               />
             </div>
-            {loginError && <p className="text-red-500">{loginError}</p>}
+            {loginError && <Label className="flex items-center justify-center text-red-500">{loginError}</Label>}
             <Button type="submit" className="w-full">Login</Button>
           </form>
         </CardContent>

@@ -4,16 +4,18 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 
 export default function LoginForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("admin@mail.com");
+  const [password, setPassword] = useState("admin");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await signIn("credentials", {
-      email,
+      username,
       password,
       redirect: false,
     });
+
+    console.log(res);
 
     if (res?.error) {
       alert("Login failed: " + res.error);
@@ -22,7 +24,7 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
-      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
+      <input type="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" required />
       <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
       <button type="submit">Login</button>
     </form>
