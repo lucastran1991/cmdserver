@@ -1,7 +1,7 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-export const authOptions: NextAuthOptions = {
+export default NextAuth({
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -10,30 +10,21 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        const headers = new Headers();
-        headers.append("Content-Type", "application/x-www-form-urlencoded");
-        const reqbody = new URLSearchParams();
-        reqbody.append("username", credentials?.username ?? '');
-        reqbody.append("password", credentials?.password ?? '');
-
-        console.log(reqbody);
-
+        console.log('credentials', credentials);
         const res = await fetch('http://localhost:8000/auth/jwt/login', {
           method: 'POST',
-          headers: headers,
-          body: reqbody,
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            username: credentials?.username ?? '',
+            password: credentials?.password ?? ''
+          }),
         });
-        
         const user = await res.json();
-        console.log(user);
-
         if (res.ok && user) {
           return user;
         } else {
           return null;
         }
-
-        return null;
       },
     }),
   ],
@@ -41,6 +32,4 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
-};
-
-export default NextAuth(authOptions);
+});

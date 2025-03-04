@@ -19,27 +19,15 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
-      console.error('Username and password are required');
-      setLoginError('Username and password are required');
-      return;
-    }
-    console.log('Logging in...');
-    try {
-      const result = await signIn('credentials', {
-        redirect: false,
-        username,
-        password
-      });
-      if (result?.error) {
-        console.error(result.error);
-      } else {
-        console.log('Login successful');
-        setLoginError('');
-      }
-    } catch (error) {
-      console.error('There was an error logging in:', error);
-      setLoginError('There was an error logging in');
+    const result = await signIn('credentials', {
+      redirect: false,
+      username,
+      password
+    });
+    if (result?.error) {
+      console.error(result.error);
+    } else {
+      console.log('Login successful');
     }
   };
 
