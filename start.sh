@@ -7,7 +7,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
   exit 1
 fi
 HOST=$(jq -r '.backend.host' $CONFIG_FILE)
-PORT=$(jq -r '.backend.host' $CONFIG_FILE)
+PORT=$(jq -r '.backend.port' $CONFIG_FILE)
 
 # Function to check if a command exists
 command_exists() {
