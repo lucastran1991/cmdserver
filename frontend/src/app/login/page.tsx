@@ -11,23 +11,40 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card"
+import { useRouter } from "next/navigation";
 
 const Login = () => {
   const [username, setUsername] = useState('admin@mail.com');
   const [password, setPassword] = useState('admin');
   const [loginError, setLoginError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const result = await signIn('credentials', {
-      redirect: false,
-      username,
-      password
-    });
-    if (result?.error) {
-      console.error(result.error);
-    } else {
-      console.log('Login successful');
+    e.preventDefault(); // Prevent default form submission
+    setIsLoading(true);
+    setLoginError(''); // Clear previous errors
+  
+    console.log('Submitting login form', username, password);
+
+    try {
+      const result = await signIn('credentials', {
+        redirect: false, // Don't redirect automatically
+        email: username, // Use 'email' if your credentials provider expects it
+        password
+      });
+      if (result?.error) {
+        console.error('Login error:', result.error);
+        setLoginError('Invalid credentials. Please try again.');
+      } else if (result?.ok) {
+        console.log('Login successful', result);
+        router.push('/home'); // Redirect to home page on successful login
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      setLoginError('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,8 +76,14 @@ const Login = () => {
                 required
               />
             </div>
-            {loginError && <Label className="flex items-center justify-center text-red-500">{loginError}</Label>}
-            <Button type="submit" className="w-full">Login</Button>
+            {loginError && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {loginError}
+              </div>
+            )}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Logging in...' : 'Login'}
+            </Button>
           </form>
         </CardContent>
       </Card>
