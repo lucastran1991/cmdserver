@@ -33,5 +33,5 @@ set "PYTHONPATH=%cd%\backend"
 start cmd /k "set "PYTHONPATH=%cd%\backend" && uvicorn "app.app:app" --host %HOST% --port %PORT%"
 
 :: Start the frontend development server
-cd frontend
-npm run dev
+:: cd frontend
+:: npm run dev
