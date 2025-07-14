@@ -52,6 +52,10 @@ if __name__ == "__main__":
             sys.exit(1)
     
     print(f"Starting server on {host}:{port}")
+    print(f"API Documentation will be available at:")
+    print(f"  Swagger UI: http://{host}:{port}/docs")
+    print(f"  ReDoc: http://{host}:{port}/redoc")
+    print(f"  OpenAPI JSON: http://{host}:{port}/openapi.json")
     
     try:
         uvicorn.run(

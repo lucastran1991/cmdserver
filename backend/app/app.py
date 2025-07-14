@@ -23,7 +23,14 @@ async def lifespan(app: FastAPI):
     await create_db_and_tables()
     yield
 
-app = FastAPI(title="CMD Server API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(
+    title="CMD Server API", 
+    version="1.0.0", 
+    description="API for managing server deployments and monitoring",
+    docs_url="/docs",  # Swagger UI (default)
+    redoc_url="/redoc",  # ReDoc alternative
+    lifespan=lifespan
+)
 
 # Add CORS middleware
 app.add_middleware(
@@ -497,4 +504,23 @@ async def get_deployment_status(current_user=Depends(current_active_user)):
         "current_ui_commit": ui_commit_result["stdout"].strip() if ui_commit_result["success"] else "unknown",
         "server_environment": env_result["stdout"].strip() if env_result["success"] else "unknown",
         "last_updated": datetime.now().isoformat()
+    }
+
+@app.get("/")
+async def root():
+    """Root endpoint with API documentation links"""
+    return {
+        "message": "CMD Server API",
+        "version": "1.0.0",
+        "documentation": {
+            "swagger_ui": "/docs",
+            "redoc": "/redoc",
+            "openapi_json": "/openapi.json"
+        },
+        "endpoints": {
+            "auth": "/auth",
+            "deployment": "/api/deployment",
+            "logs": "/api/logs",
+            "status": "/api/deployment/status"
+        }
     }
