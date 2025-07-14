@@ -50,22 +50,22 @@ export default function Home() {
       {targetList.map((target, idx) => (
         <div
           key={target.id || idx}
-          className="bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-xl shadow-2xl p-6 flex flex-col items-start border border-purple-300 dark:border-purple-700 hover:scale-105 transition-transform duration-200"
+          className="dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-xl shadow-2xl p-6 flex flex-col items-start border border-purple-300 dark:border-purple-700 hover:scale-105 transition-transform duration-200"
         >
-            <div className="flex items-center mb-4 w-full">
+          <div className="flex items-center mb-4 w-full">
             {/* Use Next.js Image if available, else fallback to Font Awesome */}
             <span className="mr-3 text-2xl text-blue-700 dark:text-blue-300">
               <i className="fas fa-server" aria-label="Server Icon"></i>
             </span>
             <h3 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700">
-            {target.name || "Unnamed Target"}
+              {target.name || "Unnamed Target"}
             </h3>
             <span className={`ml-auto px-3 py-1 rounded-full text-xs font-bold
               ${target.server_status ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"}
             `}>
               {target.server_status ? "Online" : "Offline"}
             </span>
-            </div>
+          </div>
           <p className="mb-3 text-gray-700 dark:text-gray-300 italic">{target.description || "No description"}</p>
           <div className="grid grid-cols-2 gap-2 w-full mb-2">
             <div className="text-sm text-gray-700 dark:text-gray-200">
@@ -130,18 +130,18 @@ export default function Home() {
               const token = localStorage.getItem("access_token");
               if (!token) return;
               try {
-          await fetch("http://localhost:8000/auth/jwt/logout", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ token }),
-          });
-          localStorage.removeItem("access_token");
-          setIsLogin(false);
-          router.replace("/login");
+                await fetch("http://localhost:8000/auth/jwt/logout", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ token }),
+                });
+                localStorage.removeItem("access_token");
+                setIsLogin(false);
+                router.replace("/login");
               } catch (err) {
-          // handle error if needed
+                // handle error if needed
               }
             }}
           >
@@ -163,21 +163,29 @@ export default function Home() {
 
           {/* Targets List or Empty State */}
           {targetList.length > 0 ? (
-            <div className="animate-fade-in-up">{renderTargetCards()}</div>
+            <div className="relative animate-fade-in-up">
+              <div className="fixed inset-0 -z-10 pointer-events-none w-screen h-screen">
+                <div className="w-full h-full bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 opacity-60 blur-lg"></div>
+                <div className="absolute top-10 left-10 w-32 h-32 bg-pink-300 opacity-30 rounded-full blur-2xl"></div>
+                <div className="absolute bottom-10 right-10 w-40 h-40 bg-blue-300 opacity-30 rounded-full blur-2xl"></div>
+                <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-purple-400 opacity-20 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2"></div>
+              </div>
+              {renderTargetCards()}
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center mt-16 animate-fade-in">
               <Image
-          src="/empty-box.svg"
-          alt="No targets"
-          width={80}
-          height={80}
-          className="mb-6 opacity-80"
+                src="/empty-box.svg"
+                alt="No targets"
+                width={80}
+                height={80}
+                className="mb-6 opacity-80"
               />
               <div className="text-2xl font-bold text-gray-400 dark:text-gray-500 mb-2">
-          No targets found.
+                No targets found.
               </div>
               <p className="text-gray-500 dark:text-gray-400">
-          Try adding a new target or check your connection.
+                Try adding a new target or check your connection.
               </p>
             </div>
           )}

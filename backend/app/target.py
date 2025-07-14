@@ -117,3 +117,4 @@ async def delete_all_targets(db: AsyncSession = Depends(get_target_db)):
     
     await db.commit()
     return {"deleted": count, "message": f"Successfully deleted {count} targets"}
+
