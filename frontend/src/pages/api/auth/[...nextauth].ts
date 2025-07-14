@@ -16,7 +16,7 @@ export default NextAuth({
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: new URLSearchParams({
             username: credentials?.username ?? '',
-            password: credentials?.password ?? ''2
+            password: credentials?.password ?? ''
           }),
         });
         const user = await res.json();
