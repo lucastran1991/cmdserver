@@ -9,13 +9,18 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import Column, String, Boolean, UUID, ForeignKey
 import uuid
 
-config_path = os.path.join(os.path.dirname(__file__), "../../config.json")
+current_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.abspath(os.path.join(current_dir, "../../config.json"))
+
 with open(config_path) as config_file:
     config = json.load(config_file)
 
-DATABASE_URL = f"sqlite+aiosqlite:///./backend/db/{config['backend']['db']['name']}.db"
+db_name = config["backend"]["db"]["name"]
+db_path = os.path.abspath(os.path.join(current_dir, f"../db/{db_name}.db"))
+print("Resolved DB path:", db_path)
 
-
+DATABASE_URL = f"sqlite+aiosqlite:///{db_path}"
+    
 class Base(DeclarativeBase):
     pass
 
