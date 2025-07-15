@@ -54,7 +54,10 @@ const Login = () => {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
           username: username,
-          password: password
+          password: password,
+          is_superuser: "false",
+          is_verified: "true",
+          is_active: "true"
         }),
       });
 
@@ -117,7 +120,7 @@ const Login = () => {
             )}
             <Button
               type="submit"
-              className="w-full py-3 text-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all duration-200 rounded-lg shadow-lg"
+              className="w-full h-12 py-3 text-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all duration-200 rounded-lg shadow-lg"
               disabled={isLoading}
             >
               {isLoading ? (

@@ -51,6 +51,9 @@ export default function Home() {
           const response = await makeAuthenticatedRequest(API_ENDPOINTS.TARGETS);
           const data = await response.json();
           setTargetList(data);
+          // Add a 2-second delay
+          // await new Promise(resolve => setTimeout(resolve, 2000));
+          setTargetList(data);
           setIsInit(true);
           setIsLoading(false);
         } catch (err) {

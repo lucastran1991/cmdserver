@@ -16,6 +16,7 @@ import { API_ENDPOINTS } from "@/lib/api";
 const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('BE'); // Default role
   const [registerError, setRegisterError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -35,19 +36,19 @@ const Register = () => {
           password: password
         }),
       });
-      
+
       const user = await result.json();
       if (!result.ok) {
         console.error('Registration error:', user.detail || user.error);
         setRegisterError(user.detail || user.error || 'Registration failed');
         return;
       }
-      
+
       console.log('Registration successful', user);
       // Store the credentials temporarily
-      sessionStorage.setItem('registeredUser', JSON.stringify({ 
-        username, 
-        password 
+      sessionStorage.setItem('registeredUser', JSON.stringify({
+        username,
+        password
       }));
       router.push('/login');
     } catch (error) {
@@ -93,6 +94,25 @@ const Register = () => {
                 placeholder="Enter your password"
               />
             </div>
+            <div className="mb-6">
+              <Label htmlFor="role" className="mb-2 text-lg text-gray-700">Role</Label>
+              <select
+                id="role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                required
+                className="w-full border-2 border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-lg px-4 py-2 transition-all duration-200"
+              >
+                <option value="" disabled>Select your role</option>
+                <option value="BE">BE</option>
+                <option value="UI">UI</option>
+                <option value="QA">QA</option>
+                <option value="Người qua đường">Người qua đường</option>
+                <option value="Đi trễ">Đi trễ</option>
+                <option value="Về sớm">Về sớm</option>
+                <option value="Người ăn kem mãi không trúng thưởng">Người ăn kem mãi không trúng thưởng</option>
+              </select>
+            </div>
             {registerError && (
               <div className="mb-6 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg shadow">
                 {registerError}
@@ -100,7 +120,7 @@ const Register = () => {
             )}
             <Button
               type="submit"
-              className="w-full py-3 text-lg font-semibold bg-gradient-to-r from-green-500 to-blue-500 hover:from-purple-600 hover:to-pink-600 transition-all duration-200 rounded-lg shadow-lg"
+              className="w-full h-12 py-3 text-lg font-semibold bg-gradient-to-r from-green-500 to-blue-500 hover:from-purple-600 hover:to-pink-600 transition-all duration-200 rounded-lg shadow-lg"
               disabled={isLoading}
             >
               {isLoading ? (
