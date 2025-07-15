@@ -99,7 +99,10 @@ class LogStreamRequest(BaseModel):
 
 
 @app.get("/api/deployment/config")
-async def get_deployment_config(target_id: UUID, db: AsyncSession = Depends(get_async_session)):
+async def get_deployment_config(
+    target_id: UUID, 
+    db: AsyncSession = Depends(get_async_session)
+):
     stmt = select(Target).where(Target.id == target_id)
     result = await db.execute(stmt)
     db_target = result.scalar_one_or_none()
@@ -107,7 +110,10 @@ async def get_deployment_config(target_id: UUID, db: AsyncSession = Depends(get_
         raise HTTPException(status_code=404, detail="Target not found")
     print(f"Using server path: {db_target.server_path}")
     try:
-        with open(db_target.server_path + "/atomiton.env", "r") as f:
+        config_file_path = db_target.server_path + "/atomiton.env"
+        if not os.path.exists(config_file_path):
+            config_file_path = "./atomiton.env"
+        with open(config_file_path, "r") as f:
             lines = f.readlines()
             print("Config Env:   ", lines[1].strip())
             print("Config Port:  ", lines[3].strip())
@@ -131,7 +137,10 @@ async def get_deployment_config(target_id: UUID, db: AsyncSession = Depends(get_
 
 
 # Utility function to execute shell commands
-async def execute_command(command: str, cwd: Optional[str] = None) -> Dict[str, Any]:
+async def execute_command(command: str, execute: bool = True, cwd: Optional[str] = None) -> Dict[str, Any]:
+    print(f"[CMD]: {command} in {cwd if cwd else 'current directory'}")
+    if not execute:
+        return {"success": True, "error": "Command execution is disabled"}
     try:
         process = await asyncio.create_subprocess_shell(
             command,
@@ -140,9 +149,9 @@ async def execute_command(command: str, cwd: Optional[str] = None) -> Dict[str, 
             cwd=cwd,
         )
         stdout, stderr = await process.communicate()
-        print(f"Command status: {process.returncode}")
+        print(f"[CMD Status]: {process.returncode}")
         if stdout:
-            print(f"Command output: {stdout.decode()}")
+            print(f"[CMD Output]: {stdout.decode()}")
         return {
             "success": process.returncode == 0,
             "stdout": stdout.decode(),
@@ -150,7 +159,7 @@ async def execute_command(command: str, cwd: Optional[str] = None) -> Dict[str, 
             "return_code": process.returncode,
         }
     except Exception as e:
-        print(f"Error executing command: {str(e)}")
+        print(f"[CMD Error]: {str(e)}")
         return {"success": False, "error": str(e), "return_code": -1}
 
 
@@ -159,27 +168,14 @@ async def execute_command(command: str, cwd: Optional[str] = None) -> Dict[str, 
 async def pull_be_source(
     target_id: UUID,
     background_tasks: BackgroundTasks,
+    execute: bool = False,
     current_user=Depends(current_active_user),
 ):
     print("Deploy the latest Backend commit")
     try:
         async for db in get_async_session():
-            stmt = select(Target).where(Target.id == target_id)
-            result = await db.execute(stmt)
-            db_target = result.scalar_one_or_none()
-            
-            if db_target is None:
-                print(f"Target {target_id} not found")
-                return
-            
-            # Read config from file
-            try:
-                with open(db_target.server_path + "/atomiton.env", "r") as f:
-                    lines = f.readlines()
-                    source_path = lines[11].strip() if len(lines) > 11 else "/tmp/mock_source"
-            except Exception as e:
-                print(f"Failed to read config: {str(e)}")
-                return
+            config = await get_deployment_config(target_id, db)
+            source_path = config["source"]
 
             commands = [
                 f"cd {source_path}/source_code/atprofveolia/",
@@ -188,15 +184,12 @@ async def pull_be_source(
                 "git pull",
                 f"cd {source_path}",
             ]
-
             command = " && ".join(commands)
-            print(f"Executing command: {command}")
-            result = await execute_command(command)
-            print(f"Command result: {result}")
+            result = await execute_command(command, execute)
 
             if result["success"]:
                 # Trigger server restart in background
-                background_tasks.add_task(restart_server_with_be_update, target_id)
+                background_tasks.add_task(restart_server_task, target_id)
                 return {
                     "message": "Backend source updated successfully",
                     "status": "restarting",
@@ -206,7 +199,7 @@ async def pull_be_source(
                     status_code=500,
                     detail=f"Failed to update backend source: {result.get('stderr', result.get('error'))}",
                 )
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
@@ -215,12 +208,13 @@ async def pull_be_source(
 @app.get("/api/deployment/pull-specific-be-source")
 async def pull_specific_be_source(
     target_id: UUID,
-    request: DeploymentRequest,
     background_tasks: BackgroundTasks,
+    execute: bool = False,
+    commit_id: Optional[str] = None,
     current_user=Depends(current_active_user),
 ):
     print("Deploy a specific Backend commit")
-    if not request.commit_id:
+    if not commit_id:
         raise HTTPException(status_code=400, detail="Commit ID is required")
 
     try:
@@ -231,32 +225,35 @@ async def pull_specific_be_source(
             commands = [
                 f"cd {source_path}/source_code/atprofveolia/",
                 "git fetch",
-                f"git checkout {request.commit_id}",
+                f"git checkout {commit_id}",
                 f"cd {source_path}",
             ]
-
             command = " && ".join(commands)
-            result = await execute_command(command)
+            result = await execute_command(command, execute)
 
             if result["success"]:
-                background_tasks.add_task(restart_server_with_be_update, target_id)
+                background_tasks.add_task(restart_server_task, target_id)
                 return {
-                    "message": f"Backend source updated to commit {request.commit_id}",
+                    "message": f"Backend source updated to commit {commit_id}",
                     "status": "restarting",
                 }
             else:
                 raise HTTPException(
                     status_code=500,
-                    detail=f"Failed to update to commit {request.commit_id}: {result.get('stderr', result.get('error'))}",
+                    detail=f"Failed to update to commit {commit_id}: {result.get('stderr', result.get('error'))}",
                 )
-            
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
 # 3. Pull UI Source
 @app.get("/api/deployment/pull-ui-source")
-async def pull_ui_source(target_id: UUID, current_user=Depends(current_active_user)):
+async def pull_ui_source(
+    target_id: UUID, 
+    execute: bool = False, 
+    current_user=Depends(current_active_user)
+):
     print("Deploy the latest UI commit")
     try:
         async for db in get_async_session():
@@ -272,9 +269,8 @@ async def pull_ui_source(target_id: UUID, current_user=Depends(current_active_us
                 f"rsync -av {source_path}/source_code/atprofveoliaui/api-1.0/ {source_path}/server/ui/",
                 f"cd {source_path}",
             ]
-
             command = " && ".join(commands)
-            result = await execute_command(command)
+            result = await execute_command(command, execute)
 
             if result["success"]:
                 return {"message": "UI source updated successfully"}
@@ -291,11 +287,12 @@ async def pull_ui_source(target_id: UUID, current_user=Depends(current_active_us
 @app.get("/api/deployment/pull-specific-ui-source")
 async def pull_specific_ui_source(
     target_id: UUID,
-    request: DeploymentRequest,
+    execute: bool = False,
+    commit_id: Optional[str] = None,
     current_user=Depends(current_active_user),
 ):
     print("Deploy a specific UI commit")
-    if not request.commit_id:
+    if not commit_id:
         raise HTTPException(status_code=400, detail="Commit ID is required")
 
     try:
@@ -306,21 +303,21 @@ async def pull_specific_ui_source(
             commands = [
                 f"cd {source_path}/source_code/atprofveoliaui/",
                 "git fetch",
-                f"git checkout {request.commit_id}",
+                f"git checkout {commit_id}",
                 f"rm -rf {source_path}/server/ui/*",
                 f"rsync -av {source_path}/source_code/atprofveoliaui/api-1.0/ {source_path}/server/ui/",
                 f"cd {source_path}",
             ]
 
             command = " && ".join(commands)
-            result = await execute_command(command)
+            result = await execute_command(command, execute)
 
             if result["success"]:
-                return {"message": f"UI source updated to commit {request.commit_id}"}
+                return {"message": f"UI source updated to commit {commit_id}"}
             else:
                 raise HTTPException(
                     status_code=500,
-                    detail=f"Failed to update UI to commit {request.commit_id}: {result.get('stderr', result.get('error'))}",
+                    detail=f"Failed to update UI to commit {commit_id}: {result.get('stderr', result.get('error'))}",
                 )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
@@ -342,12 +339,15 @@ async def re_schema(
             # This is a complex operation that should run in background
             background_tasks.add_task(execute_reschema_process, source_path)
             return {"message": "Re-schema process started", "status": "processing"}
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
-async def execute_reschema_process(source_path: str):
+async def execute_reschema_process(
+    source_path: str,
+    execute: bool = False
+):
     print("Background task for re-schema process")
     commands = [
         f"sed -i '5s/production/development/' {source_path}/server/sff.auto.config.cdm",
@@ -359,19 +359,20 @@ async def execute_reschema_process(source_path: str):
     ]
 
     for command in commands:
-        await execute_command(command)
+        await execute_command(command, execute)
 
 
 # 6. Change Environment and Restart
 @app.get("/api/deployment/change-environment")
 async def change_environment_and_restart(
     target_id: UUID,
-    request: EnvironmentChangeRequest,
     background_tasks: BackgroundTasks,
+    execute: bool = False,
+    environment: Optional[str] = None,
     current_user=Depends(current_active_user),
 ):
     print("Change environment (development/production) and restart server")
-    if request.environment not in ["development", "production"]:
+    if environment not in ["development", "production"]:
         raise HTTPException(
             status_code=400, detail="Environment must be 'development' or 'production'"
         )
@@ -383,29 +384,31 @@ async def change_environment_and_restart(
 
             # Get current environment
             current_env_command = f"sed -n '5s/.*:[[:space:]]*//p' {source_path}/server/sff.auto.config.cdm | sed 's/ *#.*//'"
-            current_env_result = await execute_command(current_env_command)
+            current_env_result = await execute_command(current_env_command, execute)
             current_env = current_env_result["stdout"].strip()
 
-            if current_env == request.environment:
-                return {"message": f"Already in {request.environment} environment"}
+            if current_env == environment:
+                return {"message": f"Already in {environment} environment"}
 
             # Change environment
-            if request.environment == "production":
+            if environment == "production":
                 change_cmd = f"sed -i '5s/development/production/' {source_path}/server/sff.auto.config.cdm"
             else:
                 change_cmd = f"sed -i '5s/production/development/' {source_path}/server/sff.auto.config.cdm"
 
-            result = await execute_command(change_cmd)
+            result = await execute_command(change_cmd, execute)
 
             if result["success"]:
                 background_tasks.add_task(restart_server_task, target_id)
                 return {
-                    "message": f"Environment changed to {request.environment}",
+                    "message": f"Environment changed to {environment}",
                     "status": "restarting",
                 }
             else:
-                raise HTTPException(status_code=500, detail="Failed to change environment")
-            
+                raise HTTPException(
+                    status_code=500, detail="Failed to change environment"
+                )
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
@@ -436,56 +439,32 @@ async def restart_server_with_path(
         "status": "restarting",
     }
 
+
 # Background task to restart server
-async def restart_server_task(target_id: UUID):
+async def restart_server_task(
+    target_id: UUID, 
+    execute: bool = False, 
+    current_user=Depends(current_active_user)
+):
     print("Background task to restart server")
     try:
         async for db in get_async_session():
-            stmt = select(Target).where(Target.id == target_id)
-            result = await db.execute(stmt)
-            db_target = result.scalar_one_or_none()
-            
-            if db_target is None:
-                print(f"Target {target_id} not found")
-                return
-            
-            # Read config from file
-            try:
-                with open(db_target.server_path + "/atomiton.env", "r") as f:
-                    lines = f.readlines()
-                    source_path = lines[11].strip() if len(lines) > 11 else "/tmp/mock_source"
-            except Exception as e:
-                print(f"Failed to read config: {str(e)}")
-                return
+            config = await get_deployment_config(target_id, db)
+            source_path = config["source"]
 
             # Kill existing process
             kill_cmd = f"pkill -f 'java.*{source_path}/server'"
-            print(f"Executing command: {kill_cmd}")
-            kill_be_result = await execute_command(kill_cmd)
-            if not kill_be_result["success"]:
-                print(f"Failed to kill existing server process: {kill_be_result.get('stderr', kill_be_result.get('error'))}")
-            else:
-                print("Existing server process killed successfully")
+            kill_be_result = await execute_command(kill_cmd, execute)
 
             # Start server
             start_cmd = f"nohup java @{source_path}/server/java-options.txt -jar {source_path}/server/tql.engine2.4.jar > {source_path}/server/nohup.out 2>&1 &"
-            print(f"Executing command: {start_cmd}")
-            start_be_result = await execute_command(start_cmd)
-            if not start_be_result["success"]:
-                print(f"Failed to start server: {start_be_result.get('stderr', start_be_result.get('error'))}")
-            else:
-                print("Server started successfully")
+            start_be_result = await execute_command(start_cmd, execute)
 
             # Wait and start co_engine
             await asyncio.sleep(10)
             co_engine_cmd = f"nohup python {source_path}/pyastackcore/pyastackcore/co_engine.py > {source_path}/pyastackcore/output.log 2>&1 &"
-            print(f"Executing command: {co_engine_cmd}")
-            start_co_result = await execute_command(co_engine_cmd)
-            if not start_co_result["success"]:
-                print(f"Failed to start co_engine: {start_co_result.get('stderr', start_co_result.get('error'))}")
-            else:
-                print("co_engine started successfully")
-            
+            start_co_result = await execute_command(co_engine_cmd, execute)
+
             break  # Exit the async generator loop
 
     except Exception as e:
@@ -494,17 +473,13 @@ async def restart_server_task(target_id: UUID):
     print("Server restart task completed")
 
 
-async def restart_server_with_be_update(target_id: UUID):
-    print("Background task to restart server with backend update")
-    try:
-        await restart_server_task(target_id)
-    except Exception as e:
-        print(f"Error in restart_server_with_be_update: {str(e)}")
-
-
 # 8. View Error Logs
 @app.get("/api/logs/engine")
-async def view_engine_logs(target_id: UUID, current_user=Depends(current_active_user)):
+async def view_engine_logs(
+    target_id: UUID, 
+    execute: bool = False, 
+    current_user=Depends(current_active_user)
+):
     print("Stream engine.log file")
     try:
         async for db in get_async_session():
@@ -538,7 +513,11 @@ async def view_engine_logs(target_id: UUID, current_user=Depends(current_active_
 
 # 9. Clear Cache
 @app.get("/api/deployment/clear-cache")
-async def clear_cache(target_id: UUID, current_user=Depends(current_active_user)):
+async def clear_cache(
+    target_id: UUID, 
+    execute: bool = False, 
+    current_user=Depends(current_active_user)
+):
     print("Clear cached files")
     try:
         async for db in get_async_session():
@@ -546,20 +525,24 @@ async def clear_cache(target_id: UUID, current_user=Depends(current_active_user)
             source_path = config["source"]
 
             command = f"rm -rf {source_path}/server/application/spaces/caches/*"
-            result = await execute_command(command)
+            result = await execute_command(command, execute)
 
             if result["success"]:
                 return {"message": "Cache cleared successfully"}
             else:
                 raise HTTPException(status_code=500, detail="Failed to clear cache")
-            
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
 # 10. Debug Mode (View nohup.out)
 @app.get("/api/logs/nohup")
-async def view_nohup_logs(target_id: UUID, current_user=Depends(current_active_user)):
+async def view_nohup_logs(
+    target_id: UUID, 
+    execute: bool = False, 
+    current_user=Depends(current_active_user)
+):
     print("Stream nohup.out file")
     try:
         async for db in get_async_session():
@@ -583,7 +566,7 @@ async def view_nohup_logs(target_id: UUID, current_user=Depends(current_active_u
                     yield f"data: Error reading log: {str(e)}\n\n"
 
             return StreamingResponse(generate(), media_type="text/plain")
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
@@ -591,7 +574,9 @@ async def view_nohup_logs(target_id: UUID, current_user=Depends(current_active_u
 # 11. Co Engine Logs
 @app.get("/api/logs/co-engine")
 async def view_co_engine_logs(
-    target_id: UUID, current_user=Depends(current_active_user)
+    target_id: UUID, 
+    execute: bool = False, 
+    current_user=Depends(current_active_user)
 ):
     print("Stream co_engine output.log file")
     try:
@@ -616,7 +601,7 @@ async def view_co_engine_logs(
                     yield f"data: Error reading log: {str(e)}\n\n"
 
             return StreamingResponse(generate(), media_type="text/plain")
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
@@ -624,7 +609,9 @@ async def view_co_engine_logs(
 # 12. Pull Veolia Plugin
 @app.get("/api/deployment/pull-veolia-plugin")
 async def pull_veolia_plugin(
-    target_id: UUID, current_user=Depends(current_active_user)
+    target_id: UUID, 
+    execute: bool = False, 
+    current_user=Depends(current_active_user)
 ):
     print("Deploy the latest Veolia Plugin commit")
     try:
@@ -644,7 +631,7 @@ async def pull_veolia_plugin(
             ]
 
             command = " && ".join(commands)
-            result = await execute_command(command)
+            result = await execute_command(command, execute)
 
             if result["success"]:
                 return {"message": "Veolia plugin updated successfully"}
@@ -653,14 +640,18 @@ async def pull_veolia_plugin(
                     status_code=500,
                     detail=f"Failed to update Veolia plugin: {result.get('stderr', result.get('error'))}",
                 )
-            
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
 # 13. Kill All Engine
 @app.get("/api/deployment/kill-engines")
-async def kill_all_engines(target_id: UUID, current_user=Depends(current_active_user)):
+async def kill_all_engines(
+    target_id: UUID, 
+    execute: bool = False, 
+    current_user=Depends(current_active_user)
+):
     print("Kill all running engines")
     try:
         async for db in get_async_session():
@@ -668,10 +659,10 @@ async def kill_all_engines(target_id: UUID, current_user=Depends(current_active_
             source_path = config["source"]
 
             command = f"pkill -f 'java.*{source_path}/server'"
-            result = await execute_command(command)
+            result = await execute_command(command, execute)
 
             return {"message": "All engines killed", "success": True, "details": result}
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
@@ -679,7 +670,9 @@ async def kill_all_engines(target_id: UUID, current_user=Depends(current_active_
 # 14. View Error Logs Only
 @app.get("/api/logs/errors")
 async def view_error_logs_only(
-    target_id: UUID, current_user=Depends(current_active_user)
+    target_id: UUID, 
+    execute: bool = False, 
+    current_user=Depends(current_active_user)
 ):
     print("Stream only error logs from nohup.out")
     try:
@@ -705,7 +698,7 @@ async def view_error_logs_only(
                     yield f"data: Error reading log: {str(e)}\n\n"
 
             return StreamingResponse(generate(), media_type="text/plain")
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
@@ -713,7 +706,9 @@ async def view_error_logs_only(
 # Status endpoint
 @app.get("/api/deployment/status")
 async def get_deployment_status(
-    target_id: UUID, current_user=Depends(current_active_user)
+    target_id: UUID, 
+    execute: bool = False, 
+    current_user=Depends(current_active_user)
 ):
     print("Get current deployment status")
     try:
@@ -723,21 +718,19 @@ async def get_deployment_status(
 
             # Check if server is running
             check_cmd = f"pgrep -f 'java.*{source_path}/server'"
-            result = await execute_command(check_cmd)
+            result = await execute_command(check_cmd, execute)
             is_running = result["success"] and result["stdout"].strip()
 
             # Get current commits
-            be_commit_cmd = (
-                f"cd {source_path}/source_code/atprofveolia/ && git rev-parse --short HEAD"
-            )
+            be_commit_cmd = f"cd {source_path}/source_code/atprofveolia/ && git rev-parse --short HEAD"
             ui_commit_cmd = f"cd {source_path}/source_code/atprofveoliaui/ && git rev-parse --short HEAD"
 
-            be_commit_result = await execute_command(be_commit_cmd)
-            ui_commit_result = await execute_command(ui_commit_cmd)
+            be_commit_result = await execute_command(be_commit_cmd, execute)
+            ui_commit_result = await execute_command(ui_commit_cmd, execute)
 
             # Get current environment
             env_cmd = f"sed -n '5s/.*:[[:space:]]*//p' {source_path}/server/sff.auto.config.cdm | sed 's/ *#.*//'"
-            env_result = await execute_command(env_cmd)
+            env_result = await execute_command(env_cmd, execute)
 
             return {
                 "environment": config["env"],
@@ -759,7 +752,7 @@ async def get_deployment_status(
                 ),
                 "last_updated": datetime.now().isoformat(),
             }
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
