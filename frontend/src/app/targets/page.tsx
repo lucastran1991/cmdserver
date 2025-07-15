@@ -2,6 +2,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { API_ENDPOINTS, makeAuthenticatedRequest } from "@/lib/api";
 
 interface Target {
   id?: string | number;
@@ -17,6 +18,8 @@ interface Target {
 
 export default function Home() {
   const [isLogin, setIsLogin] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInit, setIsInit] = useState(false);
   const [targetList, setTargetList] = useState<Target[]>([]);
   const router = useRouter();
 
@@ -32,42 +35,45 @@ export default function Home() {
   }, [router]);
 
   useEffect(() => {
-    if (isLogin) {
-      fetch("http://localhost:8000/targets", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setTargetList(data))
-        .catch((err) => console.error(err));
-    }
+    const fetchTargets = async () => {
+      if (isLogin) {
+        try {
+          const response = await makeAuthenticatedRequest(API_ENDPOINTS.TARGETS);
+          const data = await response.json();
+          setTargetList(data);
+          setIsInit(true);
+        } catch (err) {
+          console.error(err);
+          setIsInit(true);
+        }
+      }
+    };
+
+    fetchTargets();
   }, [isLogin]);
 
   // Card display for targets
   const renderTargetCards = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 w-full mt-8">
+    <div className="flex flex-col items-center w-full mt-8 space-y-8 animate-fade-in-up ">
       {targetList.map((target, idx) => (
         <div
           key={target.id || idx}
-          className="dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-xl shadow-2xl p-6 flex flex-col items-start border border-purple-300 dark:border-purple-700 hover:scale-105 transition-transform duration-200"
+          className="w-9/10 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-xl shadow-2xl p-6 flex flex-col items-start border border-purple-300 dark:border-purple-700 hover:scale-105 transition-transform duration-200"
         >
           <div className="flex items-center mb-4 w-full">
-            {/* Use Next.js Image if available, else fallback to Font Awesome */}
             <span className="mr-3 text-2xl text-blue-700 dark:text-blue-300">
               <i className="fas fa-server" aria-label="Server Icon"></i>
             </span>
-            <h3 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700">
+            <h2 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700">
               {target.name || "Unnamed Target"}
-            </h3>
+            </h2>
             <span className={`ml-auto px-3 py-1 rounded-full text-xs font-bold
               ${target.server_status ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"}
             `}>
               {target.server_status ? "Online" : "Offline"}
             </span>
           </div>
-          <p className="mb-3 text-gray-700 dark:text-gray-300 italic">{target.description || "No description"}</p>
-          <div className="grid grid-cols-2 gap-2 w-full mb-2">
+          <div className="grid grid-cols-2 gap-2 w-full ml-5 mb-2">
             <div className="text-sm text-gray-700 dark:text-gray-200">
               <strong>Tag:</strong> {target.server_tag}
             </div>
@@ -83,13 +89,78 @@ export default function Home() {
             <div className="text-sm text-gray-700 dark:text-gray-200 col-span-2">
               <strong>Role:</strong> <span className="px-2 py-1 rounded bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100">{target.server_role}</span>
             </div>
+            <p className="mb-3 text-gray-700 dark:text-gray-300 italic">{target.description || "No description"}</p>
           </div>
-          <button
-            className="mt-4 px-4 py-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold"
-            onClick={() => alert(`Manage server: ${target.name}`)}
-          >
-            Manage
-          </button>
+          <div className="flex justify-end mt-auto w-full">
+            <div className="flex flex-grow justify-start">
+              <button
+                className="mt-4 px-2 py-2 w-30 bg-gradient-to-r from-yellow-600 to-blue-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold"
+                onClick={async () => {
+                  try {
+                    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+                    const response = await fetch(`${API_BASE_URL}/api/deployment/pull-be-source?target_id=${target.id}`, {
+                      headers: {
+                        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                      },
+                    });
+                    if (response.ok) {
+                      alert(`Server ${target.name} deployment latest DEV initiated`);
+                    } else {
+                      alert(`Failed to deploy server: ${response.statusText}`);
+                    }
+                  } catch (error) {
+                    console.error("Error deploying server:", error);
+                    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+                    alert(`Error deploying server: ${errorMessage}`);
+                  }
+                }}
+              >Deploy</button>
+            </div>
+            <div className="flex" />
+            <button
+              className="mt-4 px-2 py-2 w-30 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold mr-2"
+              onClick={async () => {
+                try {
+                  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+                  const response = await fetch(`${API_BASE_URL}/api/deployment/restart-server?target_id=${target.id}`, {
+                    headers: {
+                      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                    },
+                  });
+                  if (response.ok) {
+                    alert(`Server ${target.name} restart initiated`);
+                  } else {
+                    alert(`Failed to restart server: ${response.statusText}`);
+                  }
+                } catch (error) {
+                  console.error("Error restarting server:", error);
+                  const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+                  alert(`Error restarting server: ${errorMessage}`);
+                }
+              }}
+            >Start</button>
+            <button
+              className="mt-4 px-2 py-2 w-30 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold"
+              onClick={async () => {
+                try {
+                  const response = await fetch(`http://localhost:8000/api/deployment/kill-engines?target_id=${target.id}`, {
+                    headers: {
+                      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                    },
+                  });
+                  if (response.ok) {
+                    alert(`Server ${target.name} is stoped`);
+                  } else {
+                    alert(`Failed to stop server: ${response.statusText}`);
+                  }
+                } catch (error) {
+                  console.error("Error stopping server:", error);
+                  const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+                  alert(`Error stopping server: ${errorMessage}`);
+                }
+              }}
+            >Stop</button>
+          </div>
         </div>
       ))}
     </div>
@@ -98,8 +169,8 @@ export default function Home() {
   return (
     <>
       {!isLogin ? (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500">
-          <div className="bg-white/80 dark:bg-gray-900/80 rounded-xl shadow-2xl p-10 flex flex-col items-center">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 overflow-y-auto">
+          <div className="bg-white/80 dark:bg-gray-900/80 rounded-xl shadow-2xl p-10 flex flex-col items-center max-h-[90vh] overflow-y-auto my-4">
             <Image
               src="/next.svg"
               alt="Access Denied"
@@ -107,18 +178,27 @@ export default function Home() {
               height={64}
               className="mb-6 animate-bounce"
             />
-            <h2 className="text-3xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700">
-              Invalid Access
-            </h2>
-            <p className="mb-6 text-gray-700 dark:text-gray-300 text-center">
-              You need to log in to continue. Please return to the login page.
-            </p>
-            <button
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold"
-              onClick={() => router.replace("/login")}
-            >
-              Back to Login
-            </button>
+            {!isInit ? (
+              <div className="flex flex-col items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
+                <p className="text-gray-700 dark:text-gray-300">Loading...</p>
+              </div>
+            ) : (
+              <>
+                <h2 className="text-3xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700">
+                  Invalid Access
+                </h2>
+                <p className="mb-6 text-gray-700 dark:text-gray-300 text-center">
+                  You need to log in to continue. Please return to the login page.
+                </p>
+                <button
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold"
+                  onClick={() => router.replace("/login")}
+                >
+                  Back to Login
+                </button>
+              </>
+            )}
           </div>
         </div>
       ) : (
@@ -154,10 +234,10 @@ export default function Home() {
           {/* Fancy Header */}
           <div className="flex items-center justify-between mb-10">
             <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700 drop-shadow-lg animate-fade-in">
-              Targets Dashboard
+              A-Stack Instances
             </h1>
-            <span className="px-4 py-2 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 text-purple-900 rounded-full font-semibold shadow-md animate-bounce">
-              {targetList.length} Active
+            <span className="mx-auto px-4 py-2 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 text-purple-900 rounded-full font-semibold shadow-md animate-bounce text-center">
+              {targetList.filter(target => target.server_status === true).length} Active
             </span>
           </div>
 

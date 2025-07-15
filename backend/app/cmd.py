@@ -21,24 +21,26 @@ with open(config_path) as config_file:
 
 SECRET = config["backend"]["secret_key"]
 
+
 class CMDString(BaseModel):
     server: str
     mode: str
     commands: List[str]  # Change to a list of commands
 
+
 class SSHClient:
     def __init__(self, hostname):
         self.hostname = hostname
         self.client = paramiko.SSHClient()
-        
+
         try:
             self.client.load_system_host_keys()
-            known_hosts = os.path.expanduser('~/.ssh/known_hosts')
+            known_hosts = os.path.expanduser("~/.ssh/known_hosts")
             if os.path.exists(known_hosts):
                 self.client.load_host_keys(known_hosts)
         except Exception as e:
             print(f"Warning: Could not load host keys: {str(e)}")
-        
+
         self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     def connect(self):
@@ -48,50 +50,54 @@ class SSHClient:
             if os.path.exists(user_config_file):
                 with open(user_config_file) as f:
                     ssh_config.parse(f)
-                
+
                 host_config = ssh_config.lookup(self.hostname)
                 print(f"Found SSH config for {self.hostname}: {host_config}")
-                
-                hostname = host_config.get('hostname', self.hostname)
-                username = host_config.get('user')
-                key_filename = host_config.get('identityfile')
+
+                hostname = host_config.get("hostname", self.hostname)
+                username = host_config.get("user")
+                key_filename = host_config.get("identityfile")
                 if isinstance(key_filename, list):
                     key_filename = key_filename[0]
-                
+
                 self.client.connect(
                     hostname=hostname,
                     username=username,
                     key_filename=key_filename,
-                    look_for_keys=True
+                    look_for_keys=True,
                 )
             else:
                 print("No SSH config file found, trying direct connection")
                 self.client.connect(self.hostname)
-                
+
             return True
-            
+
         except Exception as e:
             print(f"SSH connection error for {self.hostname}: {str(e)}")
-            print(f"Make sure your SSH config (~/.ssh/config) contains proper configuration for '{self.hostname}'")
+            print(
+                f"Make sure your SSH config (~/.ssh/config) contains proper configuration for '{self.hostname}'"
+            )
             return False
-        
+
     def execute(self, command):
         stdin, stdout, stderr = self.client.exec_command(command)
         return {
-            'output': stdout.read().decode('utf-8'),
-            'error': stderr.read().decode('utf-8'),
-            'exit_code': stdout.channel.recv_exit_status()
+            "output": stdout.read().decode("utf-8"),
+            "error": stderr.read().decode("utf-8"),
+            "exit_code": stdout.channel.recv_exit_status(),
         }
 
     def close(self):
         self.client.close()
 
+
 @router.post("/command")
 async def cmd(request: CMDString):
     response = await execute_command(request.server, request.mode, request.commands)
-    if response['status'] == 'error':
-        raise HTTPException(status_code=500, detail=response['message'])
+    if response["status"] == "error":
+        raise HTTPException(status_code=500, detail=response["message"])
     return response
+
 
 async def execute_command(server: str, mode: str, commands: List[str]):
     print(f"Commands '{commands}' executed on server '{server}'")
@@ -108,23 +114,23 @@ async def execute_command(server: str, mode: str, commands: List[str]):
                         "status": "error",
                         "message": "Failed to establish SSH connection",
                         "commands": commands,
-                        "server": server
+                        "server": server,
                     }
 
                 results = []
                 for command in commands:
                     result = ssh.execute(command)
                     results.append(result)
-                    if result['exit_code'] != 0:
+                    if result["exit_code"] != 0:
                         print(f"Command exited with status code {result['exit_code']}")
                         print(f"Error: {result['error']}")
                         ssh.close()
                         return {
                             "status": "error",
-                            "exit_code": result['exit_code'],
-                            "message": result['error'],
+                            "exit_code": result["exit_code"],
+                            "message": result["error"],
                             "command": command,
-                            "server": server
+                            "server": server,
                         }
 
                 ssh.close()
@@ -132,7 +138,7 @@ async def execute_command(server: str, mode: str, commands: List[str]):
                     "status": "success",
                     "results": results,
                     "commands": commands,
-                    "server": server
+                    "server": server,
                 }
             else:
                 results = []
@@ -145,11 +151,13 @@ async def execute_command(server: str, mode: str, commands: List[str]):
                         stderr=subprocess.PIPE,
                         text=True,
                     )
-                    results.append({
-                        "output": result.stdout,
-                        "error": result.stderr,
-                        "exit_code": result.returncode
-                    })
+                    results.append(
+                        {
+                            "output": result.stdout,
+                            "error": result.stderr,
+                            "exit_code": result.returncode,
+                        }
+                    )
                     if result.returncode != 0:
                         print(f"Command exited with status code {result.returncode}")
                         print(f"Error: {result.stderr}")
@@ -158,14 +166,14 @@ async def execute_command(server: str, mode: str, commands: List[str]):
                             "exit_code": result.returncode,
                             "message": result.stderr,
                             "command": command,
-                            "server": server
+                            "server": server,
                         }
 
                 return {
                     "status": "success",
                     "results": results,
                     "commands": commands,
-                    "server": server
+                    "server": server,
                 }
 
         except Exception as e:
@@ -174,18 +182,20 @@ async def execute_command(server: str, mode: str, commands: List[str]):
                 "status": "error",
                 "message": f"Command execution failed: {str(e)}",
                 "commands": commands,
-                "server": server
+                "server": server,
             }
 
     return {
         "status": "error",
         "message": "Invalid server or commands",
         "commands": commands,
-        "server": server
+        "server": server,
     }
+
 
 def get_jwt_strategy() -> JWTStrategy[models.UP, models.ID]:
     return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
+
 
 bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
