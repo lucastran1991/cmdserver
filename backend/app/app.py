@@ -119,7 +119,9 @@ async def execute_command(command: str, cwd: Optional[str] = None) -> Dict[str, 
             cwd=cwd
         )
         stdout, stderr = await process.communicate()
-        
+        print(f"Command status: {process.returncode}")
+        if stdout:
+            print(f"Command output: {stdout.decode()}")
         return {
             "success": process.returncode == 0,
             "stdout": stdout.decode(),
@@ -127,6 +129,7 @@ async def execute_command(command: str, cwd: Optional[str] = None) -> Dict[str, 
             "return_code": process.returncode
         }
     except Exception as e:
+        print(f"Error executing command: {str(e)}")
         return {
             "success": False,
             "error": str(e),
@@ -330,18 +333,36 @@ async def restart_server_task(server_path):
         
         # Kill existing process
         kill_cmd = f"pkill -f 'java.*{source_path}/server'"
-        await execute_command(kill_cmd)
+        print(f"Executing command: {kill_cmd}")
+        kill_be_result = await execute_command(kill_cmd)
+        if not kill_be_result["success"]:
+            print(f"Failed to kill existing server process: {kill_be_result.get('stderr', kill_be_result.get('error'))}")
+        else:
+            print("Existing server process killed successfully")
         
         # Start server
-        start_cmd = f"cd {source_path}/server/ && nohup java @java-options.txt -jar tql.engine2.4.jar &> nohup.out &"
-        await execute_command(start_cmd)
+        start_cmd = f"nohup java @{source_path}/server/java-options.txt -jar {source_path}/server/tql.engine2.4.jar > {source_path}/server/nohup.out 2>&1 &"
+        print(f"Executing command: {start_cmd}")
+        start_be_result = await execute_command(start_cmd)
+        if not start_be_result["success"]:
+            print(f"Failed to start server: {start_be_result.get('stderr', start_be_result.get('error'))}")
+        else:
+            print("Server started successfully")
         
         # Wait and start co_engine
         await asyncio.sleep(10)
-        co_engine_cmd = f"nohup python {source_path}/pyastackcore/pyastackcore/co_engine.py > output.log &"
-        await execute_command(co_engine_cmd)
+        co_engine_cmd = f"nohup python {source_path}/pyastackcore/pyastackcore/co_engine.py > {source_path}/pyastackcore/output.log 2>&1 &"
+        print(f"Executing command: {co_engine_cmd}")
+        start_co_result = await execute_command(co_engine_cmd)
+        if not start_co_result["success"]:
+            print(f"Failed to start co_engine: {start_co_result.get('stderr', start_co_result.get('error'))}")
+        else:
+            print("co_engine started successfully")
+
     except Exception as e:
         print(f"Error in restart_server_task: {str(e)}")
+
+    print("Server restart task completed")
 
 async def restart_server_with_be_update():
     print("Background task to restart server with backend update")
