@@ -13,7 +13,7 @@ config_path = os.path.join(os.path.dirname(__file__), "../../config.json")
 with open(config_path) as config_file:
     config = json.load(config_file)
 
-DATABASE_URL = f"sqlite+aiosqlite:///./backend/db/{config["backend"]['db']['name']}.db"
+DATABASE_URL = f"sqlite+aiosqlite:///./backend/db/{config['backend']['db']['name']}.db"
 
 
 class Base(DeclarativeBase):
