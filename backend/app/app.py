@@ -44,10 +44,12 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
+        "http://localhost:8888",
+        "http://localhost:8000",
+        "http://127.0.0.1:8888",
+        "http://127.0.0.1:8000",
         "http://veoliaint.atomiton.com:8888",  # Add your frontend port
-        "http://veoliaint.atomiton.com:3000",
+        "http://veoliaint.atomiton.com:8000",
         "http://veoliaint.atomiton.com",
     ],
     allow_credentials=True,  # This requires specific origins, not "*"
