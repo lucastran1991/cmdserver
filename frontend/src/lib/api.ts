@@ -60,7 +60,7 @@ export const makeAuthenticatedRequest = async (url: string, options: RequestInit
       ...authHeaders,
       ...(options.headers as Record<string, string>),
     } as HeadersInit,
-    credentials: 'include',
+    // credentials: 'include',
     mode: 'cors',
   });
 };
