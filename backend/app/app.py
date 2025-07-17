@@ -666,7 +666,7 @@ async def kill_all_engines(
             config = await get_deployment_config(target_id, db)
             source_path = config["source"]
 
-            command = f"pkill -f 'java.*{source_path}/server'"
+            command = f"pwdx $(pidof java) 2>/dev/null | grep '{source_path}/server' | cut -d: -f1 | xargs -r kill"
             result = await execute_command(command, execute)
 
             return {
