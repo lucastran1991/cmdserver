@@ -475,8 +475,9 @@ async def restart_server_task(
             start_astack_cmd = f"cd {source_path}/server/ && nohup java @java-options.txt -jar tql.engine2.4.jar > nohup.out 2>&1 &"
             start_astack_result = await execute_command(start_astack_cmd, execute)
 
-            # Wait and start co_engine
-            await asyncio.sleep(10)
+            # Wait and start coengine
+            if execute:
+                await asyncio.sleep(10)
 
             coengine_cmd = f"cd {source_path} && nohup python {source_path}/pyastackcore/pyastackcore/co_engine.py > output.log &"
             start_coengine_result = await execute_command(coengine_cmd, execute)
