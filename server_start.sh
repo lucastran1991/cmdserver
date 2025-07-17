@@ -1,8 +1,5 @@
 #!/bin/bash
-
-git stash
 git pull
-git stash pop
 
 cd frontend
 pm2 stop nextjs-app
