@@ -1,24 +1,16 @@
 #!/bin/bash
 
-# Load configuration from config.json
-CONFIG_FILE="$(pwd)/config.json"
-if [ ! -f "$CONFIG_FILE" ]; then
-  echo "Configuration file not found: $CONFIG_FILE"
-  exit 1
-fi
-HOST=$(jq -r '.backend.host' $CONFIG_FILE)
-PORT=$(jq -r '.backend.port' $CONFIG_FILE)
+git stash
+git pull
+git stash pop
 
-# Function to check if a command exists
-command_exists() {
-  command -v "$1" >/dev/null 2>&1
-}
-# Start the FastAPI server
-cd backend
-uvicorn "app.app:app" --host $HOST --port $PORT & 
+cd frontend
+pm2 stop nextjs-app
+npm run build
+pm2 start npm --name "nextjs-app" -- start
 cd ..
 
-# Start the Next.js UI
-cd frontend
-npm run dev
+cd backend
+pm2 stop fastapi-backend
+pm2 start "uvicorn app.main:app --host 0.0.0.0 --port 8000" --interpreter=python3 --name fastapi-backend
 cd ..
