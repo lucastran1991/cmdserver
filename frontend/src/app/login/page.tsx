@@ -11,8 +11,7 @@ import {
 } from "@/components/ui/card"
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
-// import { API_ENDPOINTS } from "@/lib/api";
-import { API_ENDPOINTS } from '../../lib/api';
+import { API_ENDPOINTS } from "@/lib/api";
 import { useEffect } from 'react';
 
 const Login = () => {

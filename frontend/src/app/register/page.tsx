@@ -10,8 +10,7 @@ import {
   CardTitle
 } from "@/components/ui/card"
 import { useRouter } from "next/navigation";
-// import { API_ENDPOINTS } from "@/lib/api";
-import { API_ENDPOINTS } from '../../lib/api';
+import { API_ENDPOINTS } from "@/lib/api";
 
 const Register = () => {
   const [username, setUsername] = useState('');
