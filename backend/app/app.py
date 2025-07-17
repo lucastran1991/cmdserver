@@ -464,26 +464,32 @@ async def restart_server_task(
             source_path = config["source"]
 
             # Kill existing process
-            kill_cmd = f"pkill -f 'java.*{source_path}/server'"
-            kill_be_result = await execute_command(kill_cmd, execute)
+            kill_astack_cmd = f"pwdx $(pidof java) 2>/dev/null | grep '{source_path}/server' | cut -d: -f1 | xargs -r kill"
+            kill_astack_result = await execute_command(kill_astack_cmd, execute)
+
+            # Kill co_engine process
+            kill_coengine_cmd = f"ps aux | grep '[p]ython.*{source_path}/pyastackcore' | awk '{{print $2}}' | xargs -r kill"
+            kill_coengine_result = await execute_command(kill_coengine_cmd, execute)
 
             # Start server
-            start_cmd = f"nohup java @{source_path}/server/java-options.txt -jar {source_path}/server/tql.engine2.4.jar > {source_path}/server/nohup.out 2>&1 &"
-            start_be_result = await execute_command(start_cmd, execute)
+            start_astack_cmd = f"cd {source_path}/server/ && nohup java @java-options.txt -jar tql.engine2.4.jar > nohup.out 2>&1 &"
+            start_astack_result = await execute_command(start_astack_cmd, execute)
 
             # Wait and start co_engine
-            await asyncio.sleep(5)
-            co_engine_cmd = f"nohup python {source_path}/pyastackcore/pyastackcore/co_engine.py > {source_path}/pyastackcore/output.log 2>&1 &"
-            start_co_result = await execute_command(co_engine_cmd, execute)
+            await asyncio.sleep(10)
+
+            coengine_cmd = f"cd {source_path} && nohup python {source_path}/pyastackcore/pyastackcore/co_engine.py > output.log &"
+            start_coengine_result = await execute_command(coengine_cmd, execute)
 
             return {
                 "message": "Engine restarted successfully",
                 "path": source_path,
                 "success": True,
                 "details": {
-                    "kill_be": kill_be_result,
-                    "start_be": start_be_result,
-                    "start_co": start_co_result,
+                    "kill_astack": kill_astack_result,
+                    "kill_coengine": kill_coengine_result,
+                    "start_astack": start_astack_result,
+                    "start_coengine": start_coengine_result,
                 },
             }
 
@@ -666,14 +672,21 @@ async def kill_all_engines(
             config = await get_deployment_config(target_id, db)
             source_path = config["source"]
 
-            command = f"pwdx $(pidof java) 2>/dev/null | grep '{source_path}/server' | cut -d: -f1 | xargs -r kill"
-            result = await execute_command(command, execute)
+            kill_astack_cmd = f"pwdx $(pidof java) 2>/dev/null | grep '{source_path}/server' | cut -d: -f1 | xargs -r kill"
+            kill_astack_result = await execute_command(kill_astack_cmd, execute)
+
+            # Kill co_engine process
+            kill_coengine_cmd = f"ps aux | grep '[p]ython.*{source_path}/pyastackcore' | awk '{{print $2}}' | xargs -r kill"
+            kill_coengine_result = await execute_command(kill_coengine_cmd, execute)
 
             return {
                 "message": "All engines killed",
                 "path": source_path,
                 "success": True,
-                "details": result,
+                "details": {
+                    "kill_astack_cmd": kill_astack_result,
+                    "kill_coengine_cmd": kill_coengine_result
+                },
             }
 
     except Exception as e:
