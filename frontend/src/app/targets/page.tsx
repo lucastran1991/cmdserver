@@ -2,7 +2,8 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { API_ENDPOINTS, makeAuthenticatedRequest } from "@/lib/api";
+// import { API_ENDPOINTS, makeAuthenticatedRequest } from "@/lib/api";
+import { API_ENDPOINTS, makeAuthenticatedRequest } from '../../lib/api';
 
 interface Target {
   id?: string | number;
