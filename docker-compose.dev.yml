@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: backend-dev
+    container_name: cmdserver-backend-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./config.json:/app/config.json
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app/backend
+      - RELOAD=true
+    command: uvicorn app.app:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - db
+      - redis
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: frontend-dev
+    container_name: cmdserver-frontend-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app/frontend
+      - /app/frontend/node_modules
+    environment:
+      - NODE_ENV=development
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=dev-secret-key
+    command: npm run dev
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:15-alpine
+    container_name: cmdserver-db-dev
+    environment:
+      - POSTGRES_DB=cmdserver
+      - POSTGRES_USER=cmdserver
+      - POSTGRES_PASSWORD=cmdserver_password
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: cmdserver-redis-dev
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data_dev:

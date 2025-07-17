@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  cmdserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cmdserver
+    ports:
+      - "8000:8000"  # FastAPI backend
+      - "3000:3000"  # Next.js frontend
+    volumes:
+      - ./config.json:/app/config.json
+      - ./logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock  # For Docker-in-Docker if needed
+    environment:
+      - NODE_ENV=production
+      - PYTHONPATH=/app/backend
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=your-secret-key-here
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:15-alpine
+    container_name: cmdserver-db
+    environment:
+      - POSTGRES_DB=cmdserver
+      - POSTGRES_USER=cmdserver
+      - POSTGRES_PASSWORD=cmdserver_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: cmdserver-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

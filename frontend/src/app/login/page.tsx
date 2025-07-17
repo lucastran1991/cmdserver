@@ -1,7 +1,5 @@
 "use client";
-import axios from "axios";
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -135,7 +133,7 @@ const Login = () => {
             </Button>
           </form>
           <div className="mt-6 text-center text-gray-500 text-sm">
-            <span>Don't have an account?</span>
+            <span>Don&apos;t have an account?</span>
             <a href="/register" className="ml-2 text-purple-600 hover:underline font-medium">Sign up</a>
           </div>
         </CardContent>

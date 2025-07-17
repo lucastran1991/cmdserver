@@ -10,7 +10,6 @@ import {
   CardTitle
 } from "@/components/ui/card"
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/authStore";
 import { API_ENDPOINTS } from "@/lib/api";
 
 const Register = () => {

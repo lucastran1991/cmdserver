@@ -16,18 +16,8 @@ interface Target {
   server_role?: string;
 }
 
-const LoadingOverlay = () => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 flex flex-col items-center">
-      <div className="w-16 h-16 border-t-4 border-b-4 border-purple-600 rounded-full animate-spin mb-4"></div>
-      <p className="text-lg font-semibold text-gray-800 dark:text-gray-200">Loading...</p>
-    </div>
-  </div>
-);
-
 export default function Home() {
   const [isLogin, setIsLogin] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [isInit, setIsInit] = useState(false);
   const [targetList, setTargetList] = useState<Target[]>([]);
   const router = useRouter();
@@ -47,7 +37,6 @@ export default function Home() {
     const fetchTargets = async () => {
       if (isLogin) {
         try {
-          setIsLoading(true);
           const response = await makeAuthenticatedRequest(API_ENDPOINTS.TARGETS);
           const data = await response.json();
           setTargetList(data);
@@ -55,11 +44,9 @@ export default function Home() {
           // await new Promise(resolve => setTimeout(resolve, 2000));
           setTargetList(data);
           setIsInit(true);
-          setIsLoading(false);
-        } catch (err) {
-          console.error(err);
+        } catch (error) {
+          console.error(error);
           setIsInit(true);
-          setIsLoading(false);
         }
       }
     };
@@ -112,7 +99,6 @@ export default function Home() {
                 className="mt-4 px-2 py-2 w-30 bg-gradient-to-r from-yellow-600 to-blue-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold select-text"
                 onClick={async () => {
                   try {
-                    setIsLoading(true);
                     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
                     const response = await fetch(`${API_BASE_URL}/api/deployment/pull-be-source?target_id=${target.id}`, {
                       headers: {
@@ -124,12 +110,10 @@ export default function Home() {
                     } else {
                       alert(`Failed to deploy server: ${response.statusText}`);
                     }
-                    setIsLoading(false);
                   } catch (error) {
                     console.error("Error deploying server:", error);
                     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
                     alert(`Error deploying server: ${errorMessage}`);
-                    setIsLoading(false);
                   }
                 }}
               >Deploy</button>
@@ -139,7 +123,6 @@ export default function Home() {
               className="mt-4 px-2 py-2 w-30 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold mr-2 select-text"
               onClick={async () => {
                 try {
-                  setIsLoading(true);
                   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
                   const response = await fetch(`${API_BASE_URL}/api/deployment/restart-server?target_id=${target.id}`, {
                     headers: {
@@ -151,12 +134,10 @@ export default function Home() {
                   } else {
                     alert(`Failed to restart server: ${response.statusText}`);
                   }
-                  setIsLoading(false);
                 } catch (error) {
                   console.error("Error restarting server:", error);
                   const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
                   alert(`Error restarting server: ${errorMessage}`);
-                  setIsLoading(false);
                 }
               }}
             >Start</button>
@@ -164,7 +145,6 @@ export default function Home() {
               className="mt-4 px-2 py-2 w-30 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold select-text"
               onClick={async () => {
                 try {
-                  setIsLoading(true);
                   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
                   const response = await fetch(`${API_BASE_URL}/api/deployment/kill-engines?target_id=${target.id}`, {
                     headers: {
@@ -176,12 +156,10 @@ export default function Home() {
                   } else {
                     alert(`Failed to stop server: ${response.statusText}`);
                   }
-                  setIsLoading(false);
                 } catch (error) {
                   console.error("Error stopping server:", error);
                   const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
                   alert(`Error stopping server: ${errorMessage}`);
-                  setIsLoading(false);
                 }
               }}
             >Stop</button>
@@ -245,8 +223,8 @@ export default function Home() {
                 localStorage.removeItem("access_token");
                 setIsLogin(false);
                 router.replace("/login");
-              } catch (err) {
-                // handle error if needed
+              } catch (error) {
+                console.error("Logout error:", error);
               }
             }}
           >

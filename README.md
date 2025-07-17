@@ -1,55 +1,135 @@
-# cmdserver
+# CMD Server
 
-A flexible and powerful command server implementation.
+A deployment management system with FastAPI backend and Next.js frontend.
 
-## Overview
+## Architecture
 
-cmdserver is a tool designed to process and execute commands remotely. This server provides a reliable interface for command execution, monitoring, and management across networked systems.
+- **Backend**: FastAPI with SQLAlchemy, FastAPI-Users for authentication
+- **Frontend**: Next.js with TypeScript, Tailwind CSS, shadcn/ui components
+- **Database**: PostgreSQL (SQLite for development)
+- **Authentication**: JWT tokens with custom token caching
+- **Deployment**: Docker containers with multi-stage builds
 
-## Installation
+## Quick Start
 
+### Local Development
+
+```bash
+# Backend
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.app:app --reload
+
+# Frontend (in new terminal)
+cd frontend
+npm install
+npm run dev
 ```
-git clone https://github.com/lucastran91/cmdserver.git
-cd cmdserver
-npm install  # or appropriate installation command
-```
 
-## Usage
+### Docker Setup
 
-Basic usage example:
+```bash
+# Make scripts executable
+chmod +x scripts/docker-build.sh scripts/docker-run.sh
 
-```
-cmdserver --port 8080 --config config.json
-```
+# Build Docker images
+./scripts/docker-build.sh
 
-## Features
+# Run in development mode
+./scripts/docker-run.sh dev
 
-- Remote command execution
-- Secure authentication
-- Command queueing and scheduling
-- Real-time monitoring
-- Extensible plugin architecture
-
-## Configuration
-
-Configure cmdserver by editing the `config.json` file:
-
-```json
-{
-  "port": 8080,
-  "logLevel": "info",
-  "maxConcurrentCommands": 10
-}
+# Run in production mode
+./scripts/docker-run.sh prod
 ```
 
 ## API Documentation
 
-Documentation for the API endpoints is available in the [API.md](API.md) file.
+The API client is located at `frontend/src/lib/api.ts` and provides:
 
-## Contributing
+- Authentication methods (login, register, logout)
+- Target management (CRUD operations)
+- Deployment operations (restart, pull sources, clear cache)
+- Log streaming capabilities
+- Automatic token management
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Docker Setup
 
-## License
+### Quick Start
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+```bash
+# Make scripts executable
+chmod +x scripts/docker-build.sh scripts/docker-run.sh
+
+# Build Docker images
+./scripts/docker-build.sh
+
+# Run in development mode
+./scripts/docker-run.sh dev
+
+# Run in production mode
+./scripts/docker-run.sh prod
+```
+
+### Manual Docker Commands
+
+```bash
+# Build production image
+docker build -t cmdserver:latest .
+
+# Run with docker-compose
+docker-compose up -d
+
+# Run development environment
+docker-compose -f docker-compose.dev.yml up -d
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f
+```
+
+### Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+# Database
+POSTGRES_DB=cmdserver
+POSTGRES_USER=cmdserver
+POSTGRES_PASSWORD=cmdserver_password
+
+# NextAuth
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key-here
+
+# API
+API_BASE_URL=http://localhost:8000
+```
+
+### Accessing Services
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Documentation: http://localhost:8000/docs
+- PostgreSQL: localhost:5432
+- Redis: localhost:6379
+
+### Development
+
+The development setup includes:
+- Hot reload for both frontend and backend
+- Volume mounts for live code editing
+- Separate containers for each service
+- Development dependencies included
+
+### Production
+
+The production setup includes:
+- Optimized multi-stage build
+- Combined frontend and backend in single container
+- Health checks
+- Restart policies
+- Minimal image size

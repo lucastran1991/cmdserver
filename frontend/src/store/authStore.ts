@@ -1,18 +1,25 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
 interface AuthState {
   token: string | null
-  user: any | null
+  user: User | null
   isAuthenticated: boolean
   setToken: (token: string) => void
-  setUser: (user: any) => void
+  setUser: (user: User) => void
   logout: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       token: null,
       user: null,
       isAuthenticated: false,
@@ -21,7 +28,7 @@ export const useAuthStore = create<AuthState>()(
         // Store token in localStorage as well
         localStorage.setItem('access_token', token)
       },
-      setUser: (user: any) => {
+      setUser: (user: User) => {
         set({ user })
       },
       logout: () => {

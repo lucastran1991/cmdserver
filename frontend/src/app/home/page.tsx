@@ -65,7 +65,7 @@ export default function Home() {
                 setIsLogin(false);
                 router.replace("/login");
               } catch (err) {
-                // handle error if needed
+                console.error("Logout failed:", err);
               }
             }}
           >
