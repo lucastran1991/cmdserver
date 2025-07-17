@@ -1,16 +1,16 @@
 "use client";
 import { useState } from 'react';
-import { Button } from "../../components/ui/button"
-import { Input } from "../../components/ui/input"
-import { Label } from "../../components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle
-} from "../../components/ui/card"
+} from "@/components/ui/card"
 import { useRouter } from "next/navigation";
-import { API_ENDPOINTS } from "../../lib/api";
+import { API_ENDPOINTS } from "@/lib/api";
 
 const Register = () => {
   const [username, setUsername] = useState('');
