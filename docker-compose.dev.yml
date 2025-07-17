@@ -28,13 +28,13 @@ services:
       target: frontend-dev
     container_name: cmdserver-frontend-dev
     ports:
-      - "3000:3000"
+      - "8888:8888"
     volumes:
       - ./frontend:/app/frontend
       - /app/frontend/node_modules
     environment:
       - NODE_ENV=development
-      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_URL=http://localhost:8888
       - NEXTAUTH_SECRET=dev-secret-key
     command: npm run dev
     depends_on:

@@ -10,14 +10,14 @@ if [ "$MODE" = "prod" ]; then
     echo "Starting cmdserver in production mode..."
     docker-compose up -d
     echo "Services started. Access:"
-    echo "  - Frontend: http://localhost:3000"
+    echo "  - Frontend: http://localhost:8888"
     echo "  - Backend API: http://localhost:8000"
     echo "  - API Docs: http://localhost:8000/docs"
 elif [ "$MODE" = "dev" ]; then
     echo "Starting cmdserver in development mode..."
     docker-compose -f docker-compose.dev.yml up -d
     echo "Development services started. Access:"
-    echo "  - Frontend: http://localhost:3000"
+    echo "  - Frontend: http://localhost:8888"
     echo "  - Backend API: http://localhost:8000"
     echo "  - API Docs: http://localhost:8000/docs"
 else

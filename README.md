@@ -102,7 +102,7 @@ POSTGRES_USER=cmdserver
 POSTGRES_PASSWORD=cmdserver_password
 
 # NextAuth
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=http://localhost:8888
 NEXTAUTH_SECRET=your-secret-key-here
 
 # API
@@ -111,7 +111,7 @@ API_BASE_URL=http://localhost:8000
 
 ### Accessing Services
 
-- Frontend: http://localhost:3000
+- Frontend: http://localhost:8888
 - Backend API: http://localhost:8000
 - API Documentation: http://localhost:8000/docs
 - PostgreSQL: localhost:5432

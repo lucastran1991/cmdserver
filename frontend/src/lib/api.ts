@@ -36,7 +36,7 @@ export const API_ENDPOINTS = {
 // API client configuration
 export const apiClient = {
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 88880,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

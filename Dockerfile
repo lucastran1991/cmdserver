@@ -65,7 +65,7 @@ ENV PYTHONPATH=/app/backend
 ENV NODE_ENV=production
 
 # Expose ports
-EXPOSE 8000 3000
+EXPOSE 8000 8888
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

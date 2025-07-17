@@ -8,7 +8,7 @@ services:
     container_name: cmdserver
     ports:
       - "8000:8000"  # FastAPI backend
-      - "3000:3000"  # Next.js frontend
+      - "8888:8888"  # Next.js frontend
     volumes:
       - ./config.json:/app/config.json
       - ./logs:/app/logs
@@ -16,7 +16,7 @@ services:
     environment:
       - NODE_ENV=production
       - PYTHONPATH=/app/backend
-      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_URL=http://localhost:8888
       - NEXTAUTH_SECRET=your-secret-key-here
     restart: unless-stopped
     healthcheck:
