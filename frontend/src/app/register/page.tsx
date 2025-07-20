@@ -5,6 +5,10 @@ import { API_ENDPOINTS } from "@/lib/api";
 import {
   Box,
   Button,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
   Container,
   FormControl,
   FormLabel,
@@ -25,16 +29,19 @@ import {
   IconButton,
   Divider,
   useColorModeValue,
+  Select,
 } from '@chakra-ui/react';
-import { MdAppRegistration, MdEmail, MdLock, MdPerson, MdVisibility, MdVisibilityOff } from 'react-icons/md';
+import { MdAppRegistration, MdEmail, MdLock, MdOutlineExpand, MdPerson, MdVisibility, MdVisibilityOff } from 'react-icons/md';
 
 const Register = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
-    fullName: ''
+    fullName: '',
+    role: ''
   });
+
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -51,7 +58,7 @@ const Register = () => {
   const inputBg = useColorModeValue('white', 'gray.700');
   const textColor = useColorModeValue('gray.800', 'white');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -76,6 +83,19 @@ const Register = () => {
       return;
     }
 
+    if (!formData.email || !formData.password || !formData.fullName || !formData.role) {
+      setError('Please fill in all required fields');
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/register`, {
         method: 'POST',
@@ -85,7 +105,8 @@ const Register = () => {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
-          full_name: formData.fullName
+          full_name: formData.fullName,
+          role: formData.role
         }),
       });
 
@@ -165,7 +186,7 @@ const Register = () => {
         animation="float 8s ease-in-out infinite reverse"
       />
 
-      <Container maxW="md" centerContent>
+      <Container maxW="xl" centerContent>
         <Card
           bg={cardBg}
           backdropFilter="blur(20px)"
@@ -221,13 +242,11 @@ const Register = () => {
               </VStack>
             </VStack>
 
-            {/* Registration Form */}
             <form onSubmit={handleSubmit}>
               <VStack spacing={5}>
-                {/* Full Name Field */}
                 <FormControl isRequired>
                   <FormLabel color={textColor} fontWeight="semibold">
-                    Full Name
+                    Name
                   </FormLabel>
                   <InputGroup>
                     <InputLeftElement pointerEvents="none">
@@ -261,10 +280,9 @@ const Register = () => {
                   </InputGroup>
                 </FormControl>
 
-                {/* Email Field */}
                 <FormControl isRequired>
                   <FormLabel color={textColor} fontWeight="semibold">
-                    Email Address
+                    Email
                   </FormLabel>
                   <InputGroup>
                     <InputLeftElement pointerEvents="none">
@@ -298,7 +316,50 @@ const Register = () => {
                   </InputGroup>
                 </FormControl>
 
-                {/* Password Field */}
+                <FormControl isRequired>
+                  <FormLabel color={textColor} fontWeight="semibold">
+                    Who are you
+                  </FormLabel>
+                  <InputGroup>
+                    <Select
+                      name="role"
+                      placeholder="Select your role"
+                      value={formData.role}
+                      onChange={handleChange}
+                      bg={inputBg}
+                      border="2px solid"
+                      borderColor="gray.200"
+                      borderRadius="xl"
+                      fontSize="md"
+                      _hover={{
+                        borderColor: 'blue.300',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                      }}
+                      _focus={{
+                        borderColor: 'blue.500',
+                        boxShadow: '0 0 0 3px rgba(66, 153, 225, 0.1)',
+                        transform: 'translateY(-1px)',
+                      }}
+                      transition="all 0.2s"
+                    >                      
+                      <option value="BE">BE</option>
+                      <option value="UI">UI</option>
+                      <option value="QA">QA</option>
+                      <option value="PM">PM</option>
+                      <option value="Người qua đường">Người qua đường</option>
+                      <option value="DevOps">DevOps</option>
+                      <option value="Đi trễ">Đi trễ</option>
+                      <option value="Về sớm">Về sớm</option>
+                      <option value="Người chọc chó">Người chọc chó</option>
+                      <option value="Người bị chó cắn">Người bị chó cắn</option>
+                      <option value="gâu gâu">gâu gâu</option>
+                      <option value="Người ăn kem mãi không trúng thưởng">Người ăn kem mãi không trúng thưởng</option>
+                      <option value="Nô lệ deploy">Nô lệ deploy</option>
+                    </Select>
+                  </InputGroup>
+                </FormControl>
+
                 <FormControl isRequired>
                   <FormLabel color={textColor} fontWeight="semibold">
                     Password
@@ -346,7 +407,6 @@ const Register = () => {
                   </InputGroup>
                 </FormControl>
 
-                {/* Confirm Password Field */}
                 <FormControl isRequired>
                   <FormLabel color={textColor} fontWeight="semibold">
                     Confirm Password
@@ -394,7 +454,6 @@ const Register = () => {
                   </InputGroup>
                 </FormControl>
 
-                {/* Error Alert */}
                 {error && (
                   <Alert status="error" borderRadius="xl" bg="red.50" border="1px solid" borderColor="red.200">
                     <AlertIcon color="red.500" />
@@ -404,7 +463,6 @@ const Register = () => {
                   </Alert>
                 )}
 
-                {/* Submit Button */}
                 <Button
                   type="submit"
                   isLoading={isLoading}
@@ -445,7 +503,6 @@ const Register = () => {
                   Create Account 🚀
                 </Button>
 
-                {/* Divider */}
                 <HStack w="full" my={4}>
                   <Divider />
                   <Text fontSize="sm" color="gray.500" whiteSpace="nowrap">
@@ -454,7 +511,6 @@ const Register = () => {
                   <Divider />
                 </HStack>
 
-                {/* Sign In Link */}
                 <Link
                   href="/login"
                   w="full"
@@ -485,7 +541,6 @@ const Register = () => {
         </Card>
       </Container>
 
-      {/* CSS Animations */}
       <style jsx global>{`
         @keyframes float {
           0%, 100% {

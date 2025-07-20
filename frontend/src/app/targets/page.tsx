@@ -489,7 +489,7 @@ export default function Home() {
                       🔒
                     </Text>
                   </Box>
-                  
+
                   {!isInit ? (
                     <VStack spacing={4}>
                       <Spinner
@@ -535,7 +535,11 @@ export default function Home() {
                           transform: 'translateY(0)',
                         }}
                         transition="all 0.2s"
-                        onClick={() => router.replace("/login")}
+                        onClick={() => {
+                          localStorage.removeItem("access_token");
+                          setIsLogin(false);
+                          router.replace("/login");
+                        }}
                       >
                         Back to Login
                       </Button>

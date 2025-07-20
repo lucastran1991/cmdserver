@@ -19,6 +19,12 @@ async def migrate_user_table():
     """Add avatar and role columns to the user table if they don't exist."""
     
     async with engine.begin() as conn:
+        # Check if full_name column exists
+        result = await conn.execute(text(
+            "SELECT name FROM pragma_table_info('user') WHERE name='full_name'"
+        ))
+        full_name_exists = result.fetchone() is not None
+
         # Check if avatar column exists
         result = await conn.execute(text(
             "SELECT name FROM pragma_table_info('user') WHERE name='avatar'"
@@ -30,7 +36,16 @@ async def migrate_user_table():
             "SELECT name FROM pragma_table_info('user') WHERE name='role'"
         ))
         role_exists = result.fetchone() is not None
-        
+
+        # Add full_name column if it doesn't exist
+        if not full_name_exists:
+            await conn.execute(text(
+                "ALTER TABLE user ADD COLUMN full_name VARCHAR NOT NULL DEFAULT 'user'"
+            ))
+            print("✓ Added 'full_name' column to user table")
+        else:
+            print("- 'full_name' column already exists")
+            
         # Add avatar column if it doesn't exist
         if not avatar_exists:
             await conn.execute(text(
@@ -55,8 +70,8 @@ async def migrate_user_table():
 async def main():
     """Run the migration."""
     print("Starting User table migration...")
-    print("Adding 'avatar' and 'role' columns to User table...")
-    
+    print("Adding 'full_name', 'avatar' and 'role' columns to User table...")
+
     try:
         await migrate_user_table()
         print("✓ Migration completed successfully!")

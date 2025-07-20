@@ -31,8 +31,8 @@ import {
 import { MdVisibility, MdVisibilityOff, MdEmail, MdLock } from 'react-icons/md';
 
 const Login = () => {
-  const [username, setUsername] = useState('admin@mail.com');
-  const [password, setPassword] = useState('admin');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -99,7 +99,7 @@ const Login = () => {
           isClosable: true,
         });
 
-        setTimeout(() => router.push('/targets'), 500);
+        setTimeout(() => router.push('/preload'), 500);
       } else {
         setLoginError(data.detail || 'Login failed');
         toast({

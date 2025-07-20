@@ -26,6 +26,7 @@ class Base(DeclarativeBase):
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
+    full_name = Column(String, nullable=False, default="user")
     avatar = Column(String, nullable=True)  # URL or path to avatar image
     role = Column(String, nullable=False, default="user")  # User role (e.g., "admin", "user", "moderator")
 

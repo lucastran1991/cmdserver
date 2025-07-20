@@ -40,7 +40,11 @@ export default function Home() {
             </p>
             <button
               className="px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold"
-              onClick={() => router.replace("/login")}
+              onClick={() => {
+                localStorage.removeItem("access_token");
+                setIsLogin(false);
+                router.replace("/login");
+              }}
             >
               Back to Login
             </button>
@@ -94,7 +98,7 @@ export default function Home() {
             <div className="flex gap-4 items-center flex-col sm:flex-row">
               <a
                 className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-                href="/targets"
+                href="/preload"
               >
                 <Image
                   className="dark:invert"

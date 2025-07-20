@@ -31,6 +31,10 @@ export const API_ENDPOINTS = {
   
   // Targets
   TARGETS: `${API_BASE_URL}/targets`,
+
+  // User Preload Data
+  USER_PRELOAD: `${API_BASE_URL}/preload`,
+  
 } as const;
 
 // API client configuration
