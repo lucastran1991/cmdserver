@@ -3,6 +3,30 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_ENDPOINTS, makeAuthenticatedRequest } from "@/lib/api";
+import {
+  Box,
+  Button,
+  Container,
+  VStack,
+  HStack,
+  Text,
+  Heading,
+  Card,
+  CardBody,
+  Badge,
+  Grid,
+  GridItem,
+  useToast,
+  Spinner,
+  Center,
+  useColorModeValue,
+  Icon,
+  Flex,
+  Divider,
+  Alert,
+  AlertIcon,
+} from '@chakra-ui/react';
+import { MdStorage, MdLogout, MdPlayArrow, MdStop, MdCloudUpload } from 'react-icons/md';
 
 interface Target {
   id?: string | number;
@@ -21,6 +45,15 @@ export default function Home() {
   const [isInit, setIsInit] = useState(false);
   const [targetList, setTargetList] = useState<Target[]>([]);
   const router = useRouter();
+  const toast = useToast();
+
+  // Color mode values
+  const bgGradient = useColorModeValue(
+    'linear(135deg, blue.400 0%, purple.500 50%, pink.400 100%)',
+    'linear(135deg, blue.600 0%, purple.700 50%, pink.600 100%)'
+  );
+  const cardBg = useColorModeValue('rgba(255, 255, 255, 0.95)', 'rgba(26, 32, 44, 0.95)');
+  const textColor = useColorModeValue('gray.800', 'white');
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -40,239 +73,621 @@ export default function Home() {
           const response = await makeAuthenticatedRequest(API_ENDPOINTS.TARGETS);
           const data = await response.json();
           setTargetList(data);
-          // Add a 2-second delay
-          // await new Promise(resolve => setTimeout(resolve, 2000));
-          setTargetList(data);
           setIsInit(true);
         } catch (error) {
           console.error(error);
+          toast({
+            title: 'Error loading targets',
+            description: 'Failed to fetch target list. Please try again.',
+            status: 'error',
+            duration: 5000,
+            isClosable: true,
+          });
           setIsInit(true);
         }
       }
     };
 
     fetchTargets();
-  }, [isLogin]);
+  }, [isLogin, toast]);
+
+  // Helper functions for API calls
+  const handleDeploy = async (target: Target) => {
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${API_BASE_URL}/api/deployment/pull-be-source?target_id=${target.id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+      if (response.ok) {
+        toast({
+          title: 'Deployment Started! 🚀',
+          description: `Server ${target.name} deployment latest DEV initiated`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+      } else {
+        throw new Error(response.statusText);
+      }
+    } catch (error) {
+      console.error("Error deploying server:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast({
+        title: 'Deployment Failed',
+        description: `Error deploying server: ${errorMessage}`,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleStart = async (target: Target) => {
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${API_BASE_URL}/api/deployment/restart-server?target_id=${target.id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+      if (response.ok) {
+        toast({
+          title: 'Server Started! ▶️',
+          description: `Server ${target.name} restart initiated`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+      } else {
+        throw new Error(response.statusText);
+      }
+    } catch (error) {
+      console.error("Error restarting server:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast({
+        title: 'Start Failed',
+        description: `Error restarting server: ${errorMessage}`,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleStop = async (target: Target) => {
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${API_BASE_URL}/api/deployment/kill-engines?target_id=${target.id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+      if (response.ok) {
+        toast({
+          title: 'Server Stopped! ⏹️',
+          description: `Server ${target.name} is stopped`,
+          status: 'warning',
+          duration: 5000,
+          isClosable: true,
+        });
+      } else {
+        throw new Error(response.statusText);
+      }
+    } catch (error) {
+      console.error("Error stopping server:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast({
+        title: 'Stop Failed',
+        description: `Error stopping server: ${errorMessage}`,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleLogout = async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+    try {
+      await fetch("http://localhost:8000/auth/jwt/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token }),
+      });
+      localStorage.removeItem("access_token");
+      setIsLogin(false);
+      toast({
+        title: 'Logged Out',
+        description: 'You have been successfully logged out',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      });
+      router.replace("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   // Card display for targets
   const renderTargetCards = () => (
-    <div className="flex flex-col items-center w-full mt-8 space-y-8 animate-fade-in-up">
+    <VStack spacing={6} w="full">
       {targetList.map((target, idx) => (
-        <div
+        <Card
           key={target.id || idx}
-          className="w-9/10 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-xl shadow-2xl p-6 flex flex-col items-start border border-purple-300 dark:border-purple-700 hover:scale-105 transition-transform duration-200 select-none"
+          bg={cardBg}
+          backdropFilter="blur(20px)"
+          borderRadius="2xl"
+          boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.25)"
+          border="1px solid rgba(255, 255, 255, 0.2)"
+          p={6}
+          w="full"
+          position="relative"
+          overflow="hidden"
+          _hover={{
+            transform: 'translateY(-4px)',
+            boxShadow: '0 35px 60px -12px rgba(0, 0, 0, 0.3)',
+          }}
+          transition="all 0.3s ease"
         >
-          <div className="flex items-center mb-4 w-full">
-            <span className="mr-3 text-2xl text-blue-700 dark:text-blue-300">
-              <i className="fas fa-server" aria-label="Server Icon"></i>
-            </span>
-            <h2 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700">
-              {target.name || "Unnamed Target"}
-            </h2>
-            <span className={`ml-auto px-3 py-1 rounded-full text-xs font-bold
-              ${target.server_status ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"}
-            `}>
-              {target.server_status ? "Online" : "Offline"}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 w-full ml-5 mb-2">
-            <div className="text-sm text-gray-700 dark:text-gray-200">
-              <strong>Tag:</strong> {target.server_tag}
-            </div>
-            <div className="text-sm text-gray-700 dark:text-gray-200">
-              <strong>Alias:</strong> {target.server_alias}
-            </div>
-            <div className="text-sm text-gray-700 dark:text-gray-200">
-              <strong>Path:</strong> <span className="font-mono">{target.server_path}</span>
-            </div>
-            <div className="text-sm text-gray-700 dark:text-gray-200">
-              <strong>Port:</strong> <span className="font-mono">{target.server_port}</span>
-            </div>
-            <div className="text-sm text-gray-700 dark:text-gray-200 col-span-2">
-              <strong>Role:</strong> <span className="px-2 py-1 rounded bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100">{target.server_role}</span>
-            </div>
-            <p className="mb-3 text-gray-700 dark:text-gray-300 italic">{target.description || "No description"}</p>
-          </div>
-          <div className="flex justify-end mt-auto w-full">
-            <div className="flex flex-grow justify-start">
-              <button
-                className="mt-4 px-2 py-2 w-30 bg-gradient-to-r from-yellow-600 to-blue-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold select-text"
-                onClick={async () => {
-                  try {
-                    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-                    const response = await fetch(`${API_BASE_URL}/api/deployment/pull-be-source?target_id=${target.id}`, {
-                      headers: {
-                        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-                      },
-                    });
-                    if (response.ok) {
-                      alert(`Server ${target.name} deployment latest DEV initiated`);
-                    } else {
-                      alert(`Failed to deploy server: ${response.statusText}`);
-                    }
-                  } catch (error) {
-                    console.error("Error deploying server:", error);
-                    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-                    alert(`Error deploying server: ${errorMessage}`);
-                  }
+          <CardBody p={0}>
+            {/* Header */}
+            <Flex align="center" justify="space-between" mb={6}>
+              <HStack spacing={3}>
+                <Box
+                  w="50px"
+                  h="50px"
+                  bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                  borderRadius="xl"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  boxShadow="0 8px 20px rgba(102, 126, 234, 0.4)"
+                >
+                  <Icon as={MdStorage} color="white" boxSize={6} />
+                </Box>
+                <VStack align="start" spacing={1}>
+                  <Heading
+                    size="lg"
+                    bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
+                    bgClip="text"
+                    fontWeight="bold"
+                  >
+                    {target.name || "Unnamed Target"}
+                  </Heading>
+                  <Text fontSize="sm" color="gray.500">
+                    {target.description || "No description"}
+                  </Text>
+                </VStack>
+              </HStack>
+              <Badge
+                colorScheme={target.server_status ? "green" : "red"}
+                variant="solid"
+                borderRadius="full"
+                px={3}
+                py={1}
+                fontSize="sm"
+                fontWeight="bold"
+              >
+                {target.server_status ? "🟢 Online" : "🔴 Offline"}
+              </Badge>
+            </Flex>
+
+            {/* Server Details Grid */}
+            <Grid templateColumns="repeat(2, 1fr)" gap={4} mb={6}>
+              <GridItem>
+                <VStack align="start" spacing={1}>
+                  <Text fontSize="xs" color="gray.500" fontWeight="semibold">
+                    TAG
+                  </Text>
+                  <Text fontSize="sm" color={textColor} fontWeight="medium">
+                    {target.server_tag || "N/A"}
+                  </Text>
+                </VStack>
+              </GridItem>
+              <GridItem>
+                <VStack align="start" spacing={1}>
+                  <Text fontSize="xs" color="gray.500" fontWeight="semibold">
+                    ALIAS
+                  </Text>
+                  <Text fontSize="sm" color={textColor} fontWeight="medium">
+                    {target.server_alias || "N/A"}
+                  </Text>
+                </VStack>
+              </GridItem>
+              <GridItem>
+                <VStack align="start" spacing={1}>
+                  <Text fontSize="xs" color="gray.500" fontWeight="semibold">
+                    PATH
+                  </Text>
+                  <Text fontSize="sm" color={textColor} fontFamily="mono" fontWeight="medium">
+                    {target.server_path || "N/A"}
+                  </Text>
+                </VStack>
+              </GridItem>
+              <GridItem>
+                <VStack align="start" spacing={1}>
+                  <Text fontSize="xs" color="gray.500" fontWeight="semibold">
+                    PORT
+                  </Text>
+                  <Text fontSize="sm" color={textColor} fontFamily="mono" fontWeight="medium">
+                    {target.server_port || "N/A"}
+                  </Text>
+                </VStack>
+              </GridItem>
+            </Grid>
+
+            {/* Role Badge */}
+            <Box mb={6}>
+              <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={2}>
+                ROLE
+              </Text>
+              <Badge
+                bgGradient="linear(135deg, purple.400, pink.400)"
+                color="white"
+                borderRadius="lg"
+                px={3}
+                py={1}
+                fontSize="sm"
+                fontWeight="semibold"
+              >
+                {target.server_role || "Unknown"}
+              </Badge>
+            </Box>
+
+            <Divider mb={6} />
+
+            {/* Action Buttons */}
+            <HStack spacing={3} justify="flex-end">
+              <Button
+                leftIcon={<MdCloudUpload />}
+                bgGradient="linear(135deg, yellow.400, orange.500)"
+                color="white"
+                size="sm"
+                borderRadius="xl"
+                _hover={{
+                  bgGradient: "linear(135deg, yellow.500, orange.600)",
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                 }}
-              >Deploy</button>
-            </div>
-            <div className="flex" />
-            <button
-              className="mt-4 px-2 py-2 w-30 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold mr-2 select-text"
-              onClick={async () => {
-                try {
-                  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-                  const response = await fetch(`${API_BASE_URL}/api/deployment/restart-server?target_id=${target.id}`, {
-                    headers: {
-                      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-                    },
-                  });
-                  if (response.ok) {
-                    alert(`Server ${target.name} restart initiated`);
-                  } else {
-                    alert(`Failed to restart server: ${response.statusText}`);
-                  }
-                } catch (error) {
-                  console.error("Error restarting server:", error);
-                  const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-                  alert(`Error restarting server: ${errorMessage}`);
-                }
-              }}
-            >Start</button>
-            <button
-              className="mt-4 px-2 py-2 w-30 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold select-text"
-              onClick={async () => {
-                try {
-                  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-                  const response = await fetch(`${API_BASE_URL}/api/deployment/kill-engines?target_id=${target.id}`, {
-                    headers: {
-                      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-                    },
-                  });
-                  if (response.ok) {
-                    alert(`Server ${target.name} is stoped`);
-                  } else {
-                    alert(`Failed to stop server: ${response.statusText}`);
-                  }
-                } catch (error) {
-                  console.error("Error stopping server:", error);
-                  const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-                  alert(`Error stopping server: ${errorMessage}`);
-                }
-              }}
-            >Stop</button>
-          </div>
-        </div>
+                _active={{
+                  transform: 'translateY(0)',
+                }}
+                transition="all 0.2s"
+                onClick={() => handleDeploy(target)}
+                fontWeight="semibold"
+              >
+                Deploy
+              </Button>
+              <Button
+                leftIcon={<MdPlayArrow />}
+                bgGradient="linear(135deg, blue.400, green.500)"
+                color="white"
+                size="sm"
+                borderRadius="xl"
+                _hover={{
+                  bgGradient: "linear(135deg, blue.500, green.600)",
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                }}
+                _active={{
+                  transform: 'translateY(0)',
+                }}
+                transition="all 0.2s"
+                onClick={() => handleStart(target)}
+                fontWeight="semibold"
+              >
+                Start
+              </Button>
+              <Button
+                leftIcon={<MdStop />}
+                bgGradient="linear(135deg, red.400, pink.500)"
+                color="white"
+                size="sm"
+                borderRadius="xl"
+                _hover={{
+                  bgGradient: "linear(135deg, red.500, pink.600)",
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                }}
+                _active={{
+                  transform: 'translateY(0)',
+                }}
+                transition="all 0.2s"
+                onClick={() => handleStop(target)}
+                fontWeight="semibold"
+              >
+                Stop
+              </Button>
+            </HStack>
+          </CardBody>
+        </Card>
       ))}
-    </div>
+    </VStack>
   );
 
   return (
     <>
       {!isLogin ? (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 overflow-y-auto">
-          <div className="bg-white/80 dark:bg-gray-900/80 rounded-xl shadow-2xl p-10 flex flex-col items-center max-h-[90vh] overflow-y-auto my-4">
-            <Image
-              src="/next.svg"
-              alt="Access Denied"
-              width={64}
-              height={64}
-              className="mb-6 animate-bounce"
-            />
-            {!isInit ? (
-              <div className="flex flex-col items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-                <p className="text-gray-700 dark:text-gray-300">Loading...</p>
-              </div>
-            ) : (
-              <>
-                <h2 className="text-3xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700">
-                  Invalid Access
-                </h2>
-                <p className="mb-6 text-gray-700 dark:text-gray-300 text-center">
-                  You need to log in to continue. Please return to the login page.
-                </p>
-                <button
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform font-semibold"
-                  onClick={() => router.replace("/login")}
-                >
-                  Back to Login
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="container mx-auto px-4 py-12 relative">
-          {/* Animated Logout Button */}
-          <button
-            className="fixed top-8 right-8 z-50 px-7 py-3 bg-gradient-to-r from-red-600 via-pink-600 to-purple-600 text-white rounded-full shadow-2xl hover:scale-110 transition-transform font-bold ring-2 ring-pink-400 hover:ring-purple-500 animate-pulse"
-            onClick={async () => {
-              const token = localStorage.getItem("access_token");
-              if (!token) return;
-              try {
-                await fetch("http://localhost:8000/auth/jwt/logout", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({ token }),
-                });
-                localStorage.removeItem("access_token");
-                setIsLogin(false);
-                router.replace("/login");
-              } catch (error) {
-                console.error("Logout error:", error);
+        <Box
+          minH="100vh"
+          bgGradient={bgGradient}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          p={4}
+          position="relative"
+          overflow="hidden"
+        >
+          {/* Animated background elements */}
+          <Box
+            position="absolute"
+            top="10%"
+            left="10%"
+            w="300px"
+            h="300px"
+            bg="rgba(255, 255, 255, 0.1)"
+            borderRadius="50%"
+            animation="float 6s ease-in-out infinite"
+          />
+          <Box
+            position="absolute"
+            bottom="10%"
+            right="10%"
+            w="200px"
+            h="200px"
+            bg="rgba(255, 255, 255, 0.05)"
+            borderRadius="50%"
+            animation="float 8s ease-in-out infinite reverse"
+          />
+
+          <Container maxW="md" centerContent>
+            <Card
+              bg={cardBg}
+              backdropFilter="blur(20px)"
+              borderRadius="2xl"
+              boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.25)"
+              border="1px solid rgba(255, 255, 255, 0.2)"
+              p={8}
+              w="full"
+              position="relative"
+              overflow="hidden"
+            >
+              <CardBody>
+                <VStack spacing={6} align="center">
+                  <Box
+                    w="80px"
+                    h="80px"
+                    bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                    borderRadius="50%"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    boxShadow="0 10px 25px rgba(102, 126, 234, 0.4)"
+                    animation="pulse 2s infinite"
+                  >
+                    <Text fontSize="2xl" color="white">
+                      🔒
+                    </Text>
+                  </Box>
+                  
+                  {!isInit ? (
+                    <VStack spacing={4}>
+                      <Spinner
+                        size="xl"
+                        color="purple.500"
+                        thickness="4px"
+                        speed="0.65s"
+                      />
+                      <Text color="gray.500" fontSize="lg">
+                        Loading...
+                      </Text>
+                    </VStack>
+                  ) : (
+                    <VStack spacing={4} textAlign="center">
+                      <Heading
+                        size="xl"
+                        bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
+                        bgClip="text"
+                        textAlign="center"
+                        fontWeight="bold"
+                      >
+                        Invalid Access
+                      </Heading>
+                      <Text
+                        fontSize="md"
+                        color="gray.500"
+                        textAlign="center"
+                        mb={4}
+                      >
+                        You need to log in to continue. Please return to the login page.
+                      </Text>
+                      <Button
+                        bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
+                        color="white"
+                        size="lg"
+                        borderRadius="xl"
+                        _hover={{
+                          bgGradient: "linear(135deg, blue.500, purple.600, pink.500)",
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+                        }}
+                        _active={{
+                          transform: 'translateY(0)',
+                        }}
+                        transition="all 0.2s"
+                        onClick={() => router.replace("/login")}
+                      >
+                        Back to Login
+                      </Button>
+                    </VStack>
+                  )}
+                </VStack>
+              </CardBody>
+            </Card>
+          </Container>
+
+          {/* CSS Animations */}
+          <style jsx global>{`
+            @keyframes float {
+              0%, 100% {
+                transform: translateY(0px);
               }
-            }}
-          >
-            <span className="mr-2">
-              <i className="fas fa-sign-out-alt"></i>
-            </span>
-            Mời về cho
-          </button>
+              50% {
+                transform: translateY(-20px);
+              }
+            }
+            
+            @keyframes pulse {
+              0%, 100% {
+                transform: scale(1);
+              }
+              50% {
+                transform: scale(1.05);
+              }
+            }
+          `}</style>
+        </Box>
+      ) : (
+        <Box
+          minH="100vh"
+          bgGradient={bgGradient}
+          position="relative"
+          overflow="hidden"
+        >
+          {/* Animated background elements */}
+          <Box
+            position="absolute"
+            top="5%"
+            left="5%"
+            w="400px"
+            h="400px"
+            bg="rgba(255, 255, 255, 0.05)"
+            borderRadius="50%"
+            animation="float 8s ease-in-out infinite"
+            zIndex={0}
+          />
+          <Box
+            position="absolute"
+            bottom="5%"
+            right="5%"
+            w="300px"
+            h="300px"
+            bg="rgba(255, 255, 255, 0.03)"
+            borderRadius="50%"
+            animation="float 10s ease-in-out infinite reverse"
+            zIndex={0}
+          />
 
-          {/* Fancy Header */}
-          <div className="flex items-center justify-between mb-10">
-            <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700 drop-shadow-lg animate-fade-in">
-              A-Stack Instances
-            </h1>
-            <span className="mx-auto px-4 py-2 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 text-purple-900 rounded-full font-semibold shadow-md animate-bounce text-center">
-              {targetList.filter(target => target.server_status === true).length} Active
-            </span>
-          </div>
+          {/* Logout Button */}
+          <Box position="fixed" top={6} right={6} zIndex={50}>
+            <Button
+              leftIcon={<MdLogout />}
+              bgGradient="linear(135deg, red.400, pink.500, purple.600)"
+              color="white"
+              size="lg"
+              borderRadius="xl"
+              boxShadow="0 10px 25px rgba(0, 0, 0, 0.2)"
+              _hover={{
+                bgGradient: "linear(135deg, red.500, pink.600, purple.700)",
+                transform: 'scale(1.05)',
+                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.3)',
+              }}
+              _active={{
+                transform: 'scale(0.95)',
+              }}
+              transition="all 0.2s"
+              onClick={handleLogout}
+              fontWeight="bold"
+              animation="pulse 2s infinite"
+            >
+              Mời về cho
+            </Button>
+          </Box>
 
-          {/* Targets List or Empty State */}
-          {targetList.length > 0 ? (
-            <div className="relative animate-fade-in-up">
-              <div className="fixed inset-0 -z-10 pointer-events-none w-screen h-screen">
-                <div className="w-full h-full bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 opacity-60 blur-lg"></div>
-                <div className="absolute top-10 left-10 w-32 h-32 bg-pink-300 opacity-30 rounded-full blur-2xl"></div>
-                <div className="absolute bottom-10 right-10 w-40 h-40 bg-blue-300 opacity-30 rounded-full blur-2xl"></div>
-                <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-purple-400 opacity-20 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2"></div>
-              </div>
-              {renderTargetCards()}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center mt-16 animate-fade-in">
-              <Image
-                src="/empty-box.svg"
-                alt="No targets"
-                width={80}
-                height={80}
-                className="mb-6 opacity-80"
-              />
-              <div className="text-2xl font-bold text-gray-400 dark:text-gray-500 mb-2">
-                No targets found.
-              </div>
-              <p className="text-gray-500 dark:text-gray-400">
-                Try adding a new target or check your connection.
-              </p>
-            </div>
-          )}
-        </div>
+          <Container maxW="6xl" p={6} position="relative" zIndex={1}>
+            {/* Header */}
+            <VStack spacing={8} mb={10}>
+              <Flex
+                direction={{ base: 'column', md: 'row' }}
+                align="center"
+                justify="space-between"
+                w="full"
+                gap={4}
+              >
+                <Heading
+                  size="2xl"
+                  bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
+                  bgClip="text"
+                  fontWeight="bold"
+                  textAlign={{ base: 'center', md: 'left' }}
+                >
+                  A-Stack Instances
+                </Heading>
+                <Badge
+                  bgGradient="linear(135deg, blue.200, purple.200, pink.200)"
+                  color="purple.900"
+                  borderRadius="full"
+                  px={6}
+                  py={2}
+                  fontSize="md"
+                  fontWeight="bold"
+                  textAlign="center"
+                  animation="bounce 2s infinite"
+                >
+                  {targetList.filter(target => target.server_status === true).length} Active
+                </Badge>
+              </Flex>
+            </VStack>
+
+            {/* Targets List or Empty State */}
+            {targetList.length > 0 ? (
+              <Box w="full">
+                {renderTargetCards()}
+              </Box>
+            ) : (
+              <Center minH="50vh">
+                <VStack spacing={6}>
+                  <Box
+                    w="120px"
+                    h="120px"
+                    bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                    borderRadius="50%"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    boxShadow="0 15px 35px rgba(102, 126, 234, 0.4)"
+                    animation="float 3s ease-in-out infinite"
+                  >
+                    <Text fontSize="4xl" color="white">
+                      📦
+                    </Text>
+                  </Box>
+                  <VStack spacing={2} textAlign="center">
+                    <Heading
+                      size="xl"
+                      color="white"
+                      fontWeight="bold"
+                    >
+                      No targets found
+                    </Heading>
+                    <Text
+                      fontSize="lg"
+                      color="whiteAlpha.700"
+                    >
+                      Try adding a new target or check your connection.
+                    </Text>
+                  </VStack>
+                </VStack>
+              </Center>
+            )}
+          </Container>
+        </Box>
       )}
     </>
   );

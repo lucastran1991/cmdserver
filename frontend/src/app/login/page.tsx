@@ -2,13 +2,50 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from "next/navigation";
 import { API_ENDPOINTS } from "@/lib/api";
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  InputRightElement,
+  Heading,
+  Text,
+  VStack,
+  Container,
+  Card,
+  CardBody,
+  Alert,
+  AlertIcon,
+  AlertDescription,
+  Spinner,
+  useColorModeValue,
+  Icon,
+  Link,
+  Divider,
+  Flex,
+  useToast
+} from '@chakra-ui/react';
+import { MdVisibility, MdVisibilityOff, MdEmail, MdLock } from 'react-icons/md';
 
 const Login = () => {
   const [username, setUsername] = useState('admin@mail.com');
   const [password, setPassword] = useState('admin');
   const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const toast = useToast();
+
+  // Color mode values
+  const bgGradient = useColorModeValue(
+    'linear(to-br, blue.400, purple.500, pink.400)',
+    'linear(to-br, blue.600, purple.700, pink.600)'
+  );
+  const cardBg = useColorModeValue('white', 'gray.800');
+  const textColor = useColorModeValue('gray.600', 'gray.300');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -19,12 +56,20 @@ const Login = () => {
           if (userData.username) setUsername(userData.username);
           if (userData.password) setPassword(userData.password);
           sessionStorage.removeItem('registeredUser');
+          
+          toast({
+            title: "Welcome back!",
+            description: "Login details auto-filled from registration.",
+            status: "info",
+            duration: 3000,
+            isClosable: true,
+          });
         } catch (error) {
           console.error('Error parsing registered user data:', error);
         }
       }
     }
-  }, []);
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,102 +90,196 @@ const Login = () => {
       
       if (result.ok && data.access_token) {
         localStorage.setItem('access_token', data.access_token);
-        router.push('/targets');
+        
+        toast({
+          title: "Login successful!",
+          description: "Welcome back to CMD Server.",
+          status: "success",
+          duration: 2000,
+          isClosable: true,
+        });
+        
+        setTimeout(() => router.push('/targets'), 500);
       } else {
         setLoginError(data.detail || 'Login failed');
+        toast({
+          title: "Login failed",
+          description: data.detail || 'Please check your credentials.',
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
       }
     } catch (error) {
       console.error('Login failed:', error);
       setLoginError('Login failed. Please try again.');
+      toast({
+        title: "Connection error",
+        description: "Unable to connect to server. Please try again.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            🔐 Sign in to your account
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="username" className="sr-only">
-                Username
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
+    <Box
+      minH="100vh"
+      bgGradient={bgGradient}
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      p={4}
+    >
+      <Container maxW="md">
+        <Card 
+          bg={cardBg}
+          shadow="2xl"
+          borderRadius="2xl"
+          overflow="hidden"
+          border="1px"
+          borderColor={useColorModeValue('gray.200', 'gray.700')}
+        >
+          <CardBody p={8}>
+            <VStack spacing={6} align="stretch">
+              {/* Header */}
+              <Box textAlign="center">
+                <Box
+                  display="inline-flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  w={16}
+                  h={16}
+                  bg="blue.500"
+                  borderRadius="full"
+                  mb={4}
+                >
+                  <Icon as={MdLock} w={8} h={8} color="white" />
+                </Box>
+                <Heading
+                  size="xl"
+                  bgGradient="linear(to-r, blue.500, purple.500)"
+                  bgClip="text"
+                  mb={2}
+                >
+                  Welcome Back
+                </Heading>
+                <Text color={textColor} fontSize="lg">
+                  Sign in to access CMD Server
+                </Text>
+              </Box>
 
-          {loginError && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              {loginError}
-            </div>
-          )}
+              <Divider />
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {isLoading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                  </svg>
-                  Signing in...
-                </span>
-              ) : (
-                'Sign in'
-              )}
-            </button>
-          </div>
+              {/* Login Form */}
+              <Box as="form" onSubmit={handleSubmit}>
+                <VStack spacing={5}>
+                  <FormControl isRequired>
+                    <FormLabel color={textColor}>Email Address</FormLabel>
+                    <InputGroup>
+                      <InputLeftElement>
+                        <Icon as={MdEmail} color="gray.400" />
+                      </InputLeftElement>
+                      <Input
+                        type="email"
+                        placeholder="Enter your email"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        size="lg"
+                        borderRadius="lg"
+                        focusBorderColor="blue.500"
+                        _hover={{ borderColor: 'blue.300' }}
+                      />
+                    </InputGroup>
+                  </FormControl>
 
-          <div className="text-center">
-            <span className="text-gray-600">Don&apos;t have an account? </span>
-            <a href="/register" className="text-indigo-600 hover:text-indigo-500 font-medium">
-              Sign up
-            </a>
-          </div>
-        </form>
-      </div>
+                  <FormControl isRequired>
+                    <FormLabel color={textColor}>Password</FormLabel>
+                    <InputGroup>
+                      <InputLeftElement>
+                        <Icon as={MdLock} color="gray.400" />
+                      </InputLeftElement>
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        size="lg"
+                        borderRadius="lg"
+                        focusBorderColor="blue.500"
+                        _hover={{ borderColor: 'blue.300' }}
+                      />
+                      <InputRightElement>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          <Icon as={showPassword ? MdVisibilityOff : MdVisibility} />
+                        </Button>
+                      </InputRightElement>
+                    </InputGroup>
+                  </FormControl>
 
-      <style jsx>{`
-        .min-h-screen {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-      `}</style>
-    </div>
+                  {loginError && (
+                    <Alert status="error" borderRadius="lg">
+                      <AlertIcon />
+                      <AlertDescription>{loginError}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <Button
+                    type="submit"
+                    colorScheme="blue"
+                    size="lg"
+                    width="full"
+                    isLoading={isLoading}
+                    loadingText="Signing in..."
+                    spinner={<Spinner size="sm" />}
+                    bgGradient="linear(to-r, blue.500, purple.500)"
+                    _hover={{
+                      bgGradient: "linear(to-r, blue.600, purple.600)",
+                      transform: "translateY(-2px)",
+                      shadow: "lg"
+                    }}
+                    _active={{
+                      transform: "translateY(0)",
+                    }}
+                    transition="all 0.2s"
+                    borderRadius="lg"
+                  >
+                    Sign In
+                  </Button>
+                </VStack>
+              </Box>
+
+              <Divider />
+
+              {/* Footer */}
+              <Flex justify="center" align="center">
+                <Text color={textColor} fontSize="sm">
+                  Don&apos;t have an account?{' '}
+                  <Link 
+                    href="/register" 
+                    color="blue.500" 
+                    fontWeight="semibold"
+                    _hover={{ 
+                      color: "blue.600", 
+                      textDecoration: "underline" 
+                    }}
+                  >
+                    Sign up here
+                  </Link>
+                </Text>
+              </Flex>
+            </VStack>
+          </CardBody>
+        </Card>
+      </Container>
+    </Box>
   );
 };
 
