@@ -4,8 +4,8 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 
 export default function LoginForm() {
-  const [username, setUsername] = useState("admin@mail.com");
-  const [password, setPassword] = useState("admin");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
