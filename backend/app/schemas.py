@@ -1,15 +1,19 @@
 import uuid
+from typing import Optional
 
 from fastapi_users import schemas
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
-    pass
+    avatar: Optional[str] = None
+    role: str = "user"
 
 
 class UserCreate(schemas.BaseUserCreate):
-    pass
+    avatar: Optional[str] = None
+    role: str = "user"
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-    pass
+    avatar: Optional[str] = None
+    role: Optional[str] = None
