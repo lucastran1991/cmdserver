@@ -1,13 +1,28 @@
 #!/bin/bash
+
+# Pull latest code
+echo "Pulling latest code..."
 git pull
 
+# Stop all previous PM2 processes
+echo "Stopping all previous PM2 processes..."
 pm2 delete all
 
+# --- FRONTEND ---
+echo "Starting frontend..."
 cd frontend
 npm run build
-pm2 start npm --name "nextjs-frontend" -- start
+pm2 start npm --name "nextjs-frontend" -- start --output out.log --error err.log
 cd ..
 
+# --- BACKEND ---
+echo "Starting backend..."
 cd backend
-pm2 start "uvicorn app.app:app --host 0.0.0.0 --port 8000 &" --interpreter=python3 --name fastapi-backend
+# Don't use & and don't quote the entire command
+pm2 start uvicorn --name "fastapi-backend" \
+  --interpreter python3 \
+  --output out.log --error err.log \
+  -- app.app:app --host 0.0.0.0 --port 8000
 cd ..
+
+echo "System started successfully."
