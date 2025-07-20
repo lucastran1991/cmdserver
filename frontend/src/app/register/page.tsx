@@ -26,7 +26,7 @@ import {
   Divider,
   useColorModeValue,
 } from '@chakra-ui/react';
-import { MdEmail, MdLock, MdPerson, MdVisibility, MdVisibilityOff } from 'react-icons/md';
+import { MdAppRegistration, MdEmail, MdLock, MdPerson, MdVisibility, MdVisibilityOff } from 'react-icons/md';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -191,9 +191,7 @@ const Register = () => {
                 boxShadow="0 10px 25px rgba(102, 126, 234, 0.4)"
                 animation="pulse 2s infinite"
               >
-                <Text fontSize="2xl" color="white">
-                  📝
-                </Text>
+                <MdAppRegistration size={32} color="white" />
               </Box>
               <VStack spacing={2}>
                 <Heading
@@ -203,7 +201,7 @@ const Register = () => {
                   textAlign="center"
                   fontWeight="bold"
                 >
-                  Create Account
+                  Register Account
                 </Heading>
                 <Text
                   fontSize="md"
@@ -211,6 +209,14 @@ const Register = () => {
                   textAlign="center"
                 >
                   Join us today and start your journey
+                </Text>
+                <Text
+                  fontSize="md"
+                  color="blue.500"
+                  textAlign="center"
+                  fontWeight="bold"
+                >
+                  Việc nhẹ, volt cao, guộc lai ba lăng
                 </Text>
               </VStack>
             </VStack>

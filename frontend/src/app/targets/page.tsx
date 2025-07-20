@@ -192,7 +192,8 @@ export default function Home() {
     const token = localStorage.getItem("access_token");
     if (!token) return;
     try {
-      await fetch("http://localhost:8000/auth/jwt/logout", {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${API_BASE_URL}/auth/jwt/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -266,6 +267,9 @@ export default function Home() {
                 </VStack>
               </HStack>
               <Badge
+                position="absolute"
+                top={4}
+                right={5}
                 colorScheme={target.server_status ? "green" : "red"}
                 variant="solid"
                 borderRadius="full"
@@ -273,8 +277,9 @@ export default function Home() {
                 py={1}
                 fontSize="sm"
                 fontWeight="bold"
+                zIndex="1"
               >
-                {target.server_status ? "🟢 Online" : "🔴 Offline"}
+                {target.server_status ? "Online" : "Offline"}
               </Badge>
             </Flex>
 
@@ -315,7 +320,7 @@ export default function Home() {
                   <Text fontSize="xs" color="gray.500" fontWeight="semibold">
                     PORT
                   </Text>
-                  <Text fontSize="sm" color={textColor} fontFamily="mono" fontWeight="medium">
+                  <Text fontSize="sm" color={textColor} fontFamily="mono" fontWeight="bold">
                     {target.server_port || "N/A"}
                   </Text>
                 </VStack>
@@ -325,7 +330,7 @@ export default function Home() {
             {/* Role Badge */}
             <Box mb={6}>
               <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={2}>
-                ROLE
+                SERVER ROLE
               </Text>
               <Badge
                 bgGradient="linear(135deg, purple.400, pink.400)"
@@ -345,10 +350,13 @@ export default function Home() {
             {/* Action Buttons */}
             <HStack spacing={3} justify="flex-end">
               <Button
-                leftIcon={<MdCloudUpload />}
+                leftIcon={<MdCloudUpload size={24} color="white" />}
                 bgGradient="linear(135deg, yellow.400, orange.500)"
                 color="white"
                 size="sm"
+                height={"45px"}
+                width={"120px"}
+                fontSize={"md"}
                 borderRadius="xl"
                 _hover={{
                   bgGradient: "linear(135deg, yellow.500, orange.600)",
@@ -365,10 +373,13 @@ export default function Home() {
                 Deploy
               </Button>
               <Button
-                leftIcon={<MdPlayArrow />}
+                leftIcon={<MdPlayArrow size={24} color="white" />}
                 bgGradient="linear(135deg, blue.400, green.500)"
                 color="white"
                 size="sm"
+                height={"45px"}
+                width={"120px"}
+                fontSize={"md"}
                 borderRadius="xl"
                 _hover={{
                   bgGradient: "linear(135deg, blue.500, green.600)",
@@ -385,10 +396,13 @@ export default function Home() {
                 Start
               </Button>
               <Button
-                leftIcon={<MdStop />}
+                leftIcon={<MdStop size={24} color="white" />}
                 bgGradient="linear(135deg, red.400, pink.500)"
                 color="white"
                 size="sm"
+                height={"45px"}
+                width={"120px"}
+                fontSize={"md"}
                 borderRadius="xl"
                 _hover={{
                   bgGradient: "linear(135deg, red.500, pink.600)",
@@ -594,7 +608,7 @@ export default function Home() {
               borderRadius="xl"
               boxShadow="0 10px 25px rgba(0, 0, 0, 0.2)"
               _hover={{
-                bgGradient: "linear(135deg, red.500, pink.600, purple.700)",
+                bgGradient: "linear(135deg, purple.700, blue.600, red.500)",
                 transform: 'scale(1.05)',
                 boxShadow: '0 15px 35px rgba(0, 0, 0, 0.3)',
               }}
@@ -616,13 +630,13 @@ export default function Home() {
               <Flex
                 direction={{ base: 'column', md: 'row' }}
                 align="center"
-                justify="space-between"
+                // justify="space-between"
                 w="full"
                 gap={4}
               >
                 <Heading
                   size="2xl"
-                  bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
+                  bgGradient="linear(135deg, blue.200, yellow.500, red.400)"
                   bgClip="text"
                   fontWeight="bold"
                   textAlign={{ base: 'center', md: 'left' }}

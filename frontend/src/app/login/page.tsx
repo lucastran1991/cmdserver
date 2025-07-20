@@ -56,7 +56,7 @@ const Login = () => {
           if (userData.username) setUsername(userData.username);
           if (userData.password) setPassword(userData.password);
           sessionStorage.removeItem('registeredUser');
-          
+
           toast({
             title: "Welcome back!",
             description: "Login details auto-filled from registration.",
@@ -75,7 +75,7 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     setLoginError('');
-    
+
     try {
       const result = await fetch(API_ENDPOINTS.LOGIN, {
         method: 'POST',
@@ -87,10 +87,10 @@ const Login = () => {
       });
 
       const data = await result.json();
-      
+
       if (result.ok && data.access_token) {
         localStorage.setItem('access_token', data.access_token);
-        
+
         toast({
           title: "Login successful!",
           description: "Welcome back to CMD Server.",
@@ -98,7 +98,7 @@ const Login = () => {
           duration: 2000,
           isClosable: true,
         });
-        
+
         setTimeout(() => router.push('/targets'), 500);
       } else {
         setLoginError(data.detail || 'Login failed');
@@ -135,7 +135,7 @@ const Login = () => {
       p={4}
     >
       <Container maxW="md">
-        <Card 
+        <Card
           bg={cardBg}
           shadow="2xl"
           borderRadius="2xl"
@@ -151,11 +151,13 @@ const Login = () => {
                   display="inline-flex"
                   alignItems="center"
                   justifyContent="center"
-                  w={16}
-                  h={16}
-                  bg="blue.500"
+                  w="80px"
+                  h="80px"
+                  bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                  boxShadow="0 10px 25px rgba(102, 126, 234, 0.6)"
                   borderRadius="full"
-                  mb={4}
+                  mb="20px"
+                  animation="pulse 2s infinite"
                 >
                   <Icon as={MdLock} w={8} h={8} color="white" />
                 </Box>
@@ -262,13 +264,13 @@ const Login = () => {
               <Flex justify="center" align="center">
                 <Text color={textColor} fontSize="sm">
                   Don&apos;t have an account?{' '}
-                  <Link 
-                    href="/register" 
-                    color="blue.500" 
+                  <Link
+                    href="/register"
+                    color="blue.500"
                     fontWeight="semibold"
-                    _hover={{ 
-                      color: "blue.600", 
-                      textDecoration: "underline" 
+                    _hover={{
+                      color: "blue.600",
+                      textDecoration: "underline"
                     }}
                   >
                     Sign up here
