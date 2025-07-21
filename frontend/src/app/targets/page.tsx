@@ -138,7 +138,7 @@ export default function Home() {
           }}
           transition="all 0.3s ease"
           onClick={() => {
-            router.push(`/target?id=${target.id}`);
+            router.push(`/target_details?id=${target.id}`);
           }}
         >
           <CardBody p={0}>
