@@ -31,7 +31,7 @@ export default function LoadingScreen() {
 
   useEffect(() => {
     if (visibleIndex < messages.length) {
-      const random = Math.random() * (800 - 200) + 200;
+      const random = Math.random() * (1800 - 200) + 200;
       const timer = setTimeout(() => {
         setVisibleIndex((prev) => prev + 1);
       }, random);
@@ -113,6 +113,7 @@ export default function LoadingScreen() {
               transition={{ duration: 0.4, delay: idx * 0.1 }}
               fontSize="xl"
               fontWeight="bold"
+              textAlign="center"
               color={textColor}
               spacing={3}
             >

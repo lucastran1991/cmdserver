@@ -72,8 +72,7 @@ export default function TargetDetails() {
   const { isAuthenticated, token, logout } = useAuthStore();
   const [target, setTarget] = useState<Target | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLogin, setIsLogin] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
   const [isInit, setIsInit] = useState(false);
   const [isDebug, setIsDebug] = useState(false);
   const [error, setError] = useState('');
@@ -102,62 +101,68 @@ export default function TargetDetails() {
   }, [router]);
 
   useEffect(() => {
-    if (isLogin) {
-      if (!targetId) {
-        setError('No target ID provided');
-        setIsLoading(false);
-        return;
+    if (isLogin && targetId) {
+      if (!isInit) {
+        setIsLoading(true);
+        fetchTargetDetails();
       }
-
-      console.log("Fetching target details for ID:", targetId);
-      fetchTargetDetails();
-    } else {
-      console.log("User is logged in, skipping target details fetch");
-      setIsInit(true);
     }
-  }, [isLogin, targetId]);
+  }, [isLogin, toast]);
 
   const fetchTargetDetails = async () => {
     try {
-      setIsLoading(true);
-
-      try {
-        const response = await makeAuthenticatedRequest(API_ENDPOINTS.TARGETS + `/${targetId}`);
-        const data = await response.json();
-        console.log("Target details fetched successfully:", data);
-        setTarget(data);
-        setIsInit(true);
-      } catch (error) {
-        console.error(error);
-        toast({
-          title: 'Error loading targets',
-          description: 'Failed to fetch target list. Please try again.',
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
-        setIsInit(true);
-      }
-
+      const response = await makeAuthenticatedRequest(API_ENDPOINTS.TARGETS + `/${targetId}`);
+      const data = await response.json();
+      setTarget(data);
+      setIsInit(true);
+      setIsLoading(false);
     } catch (error) {
-      console.error('Error fetching target details:', error);
-      setError('Failed to fetch target details. Please try again.');
+      console.error(error);
       toast({
-        title: 'Error',
-        description: 'Failed to fetch target details',
+        title: 'Error loading targets',
+        description: 'Failed to fetch target list. Please try again.',
         status: 'error',
         duration: 2000,
         isClosable: true,
       });
+      setIsInit(false);
     } finally {
+      console.log("Target details fetched successfully");
       setIsLoading(false);
-      setIsRefreshing(false);
     }
   };
 
   const handleRefresh = () => {
-    setIsRefreshing(true);
+    setIsLoading(true);
     fetchTargetDetails();
+  };
+
+  const handleLogout = async () => {
+    if (!isAuthenticated) return;
+
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${API_BASE_URL}/auth/jwt/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token }),
+      });
+      toast({
+        title: 'Logged Out',
+        description: 'You have been successfully logged out',
+        status: 'info',
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setIsLogin(false);
+      logout();
+      router.replace("/login");
+    }
   };
 
   const handleAction = async (action: string) => {
@@ -203,11 +208,9 @@ export default function TargetDetails() {
           title: 'Success',
           description: successMessage,
           status: 'success',
-          duration: 5000,
+          duration: 2000,
           isClosable: true,
         });
-        // Refresh target details after action
-        handleRefresh();
       } else {
         throw new Error(response.statusText);
       }
@@ -218,36 +221,9 @@ export default function TargetDetails() {
         title: `${action.charAt(0).toUpperCase() + action.slice(1)} Failed`,
         description: `Error ${action}ing server: ${errorMessage}`,
         status: 'error',
-        duration: 5000,
+        duration: 2000,
         isClosable: true,
       });
-    }
-  };
-
-  const handleLogout = async () => {
-    if (!isAuthenticated) return;
-
-    try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const response = await fetch(`${API_BASE_URL}/auth/jwt/logout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token }),
-      });
-      logout();
-      setIsLogin(false);
-      toast({
-        title: 'Logged Out',
-        description: 'You have been successfully logged out',
-        status: 'info',
-        duration: 3000,
-        isClosable: true,
-      });
-      router.replace("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
     }
   };
 
@@ -383,13 +359,9 @@ export default function TargetDetails() {
                   transform: 'translateY(0)',
                 }}
                 transition="all 0.2s"
-                onClick={() => {
-                  logout();
-                  setIsLogin(false);
-                  router.replace("/login");
-                }}
+                onClick={handleLogout}
               >
-                Back to Login
+                Mời về cho
               </Button>
             </VStack>
           </Card>
@@ -454,13 +426,14 @@ export default function TargetDetails() {
         {/* Header */}
         <IconButton
           aria-label="Back to targets"
-          icon={<MdArrowBack />}
+          icon={<MdArrowBack size={24} />}
           colorScheme="whiteAlpha"
           variant="solid"
+          fontWeight="bold"
           size="lg"
           onClick={() => router.push('/targets')}
           _hover={{
-            transform: 'translateX(-2px)',
+            transform: 'translateX(-5px)',
           }}
           transition="all 0.2s"
         />
@@ -476,7 +449,7 @@ export default function TargetDetails() {
               <Icon as={MdOutlineSdStorage} color="white" boxSize={16} />
               <VStack align="start" spacing={1}>
                 <Heading
-                  size="xl"
+                  size="2xl"
                   color="white"
                   fontWeight="bold"
                 >
@@ -492,20 +465,21 @@ export default function TargetDetails() {
               <Badge
                 colorScheme={getStatusColor(target.server_status)}
                 variant="solid"
-                borderRadius="full"
+                borderRadius="md"
                 px={4}
                 py={2}
                 fontSize="md"
                 fontWeight="bold"
               >
-                {target.server_status ? "🟢 Online" : "🔴 Offline"}
+                {target.server_status ? "Online" : "Offline"}
               </Badge>
               <IconButton
                 aria-label="Refresh"
-                icon={<MdRefresh />}
+                icon={<MdRefresh size={22} color="white" />}
                 colorScheme="whiteAlpha"
                 variant="solid"
-                isLoading={isRefreshing}
+                bgGradient="linear(135deg, red.400, pink.500)"
+                isLoading={isLoading}
                 onClick={handleRefresh}
               />
             </HStack>
@@ -908,14 +882,14 @@ export default function TargetDetails() {
         </Grid>
         <Box position="fixed" top={6} right={6} zIndex={50}>
           <Button
-            leftIcon={<MdLogout />}
-            bgGradient="linear(135deg, red.400, pink.500, purple.600)"
+            leftIcon={<MdLogout size={20} />}
+            bgGradient="linear(135deg, purple.600, pink.600, red.600)"
             color="white"
             size="lg"
             borderRadius="xl"
             boxShadow="0 10px 25px rgba(0, 0, 0, 0.2)"
             _hover={{
-              bgGradient: "linear(135deg, purple.700, blue.600, red.500)",
+              bgGradient: "linear(135deg, red.500, pink.500, purple.500)",
               transform: 'scale(1.05)',
               boxShadow: '0 15px 35px rgba(0, 0, 0, 0.3)',
             }}

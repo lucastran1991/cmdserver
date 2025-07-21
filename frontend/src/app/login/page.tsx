@@ -63,7 +63,7 @@ const Login = () => {
             title: "Welcome back!",
             description: "Login details auto-filled from registration.",
             status: "info",
-            duration: 3000,
+            duration: 2000,
             isClosable: true,
           });
         } catch (error) {
@@ -108,7 +108,7 @@ const Login = () => {
           title: "Login failed",
           description: data.detail || 'Please check your credentials.',
           status: "error",
-          duration: 5000,
+          duration: 2000,
           isClosable: true,
         });
       }
@@ -119,7 +119,7 @@ const Login = () => {
         title: "Connection error",
         description: "Unable to connect to server. Please try again.",
         status: "error",
-        duration: 5000,
+        duration: 2000,
         isClosable: true,
       });
     } finally {

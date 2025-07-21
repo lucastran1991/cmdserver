@@ -42,7 +42,7 @@ interface Target {
 
 export default function Home() {
   const { isAuthenticated, token, logout } = useAuthStore();
-  const [isLogin, setIsLogin] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
   const [isInit, setIsInit] = useState(false);
   const [targetList, setTargetList] = useState<Target[]>([]);
   const router = useRouter();
@@ -80,7 +80,7 @@ export default function Home() {
             title: 'Error loading targets',
             description: 'Failed to fetch target list. Please try again.',
             status: 'error',
-            duration: 5000,
+            duration: 2000,
             isClosable: true,
           });
           setIsInit(true);
@@ -93,6 +93,7 @@ export default function Home() {
 
   const handleLogout = async () => {
     if (!isAuthenticated) return;
+
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const response = await fetch(`${API_BASE_URL}/auth/jwt/logout`, {
@@ -102,18 +103,19 @@ export default function Home() {
         },
         body: JSON.stringify({ token }),
       });
-      logout();
-      setIsLogin(false);
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out',
         status: 'info',
-        duration: 3000,
+        duration: 2000,
         isClosable: true,
       });
-      router.replace("/login");
     } catch (error) {
       console.error("Logout error:", error);
+    } finally {
+      setIsLogin(false);
+      logout();
+      router.replace("/login");
     }
   };
 
@@ -353,13 +355,9 @@ export default function Home() {
                     transform: 'translateY(0)',
                   }}
                   transition="all 0.2s"
-                  onClick={() => {
-                    logout();
-                    setIsLogin(false);
-                    router.replace("/login");
-                  }}
+                  onClick={handleLogout}
                 >
-                  Back to Login
+                  Mời về cho
                 </Button>
               </VStack>
             </Card>

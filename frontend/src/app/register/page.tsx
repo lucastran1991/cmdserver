@@ -76,7 +76,7 @@ const Register = () => {
         title: 'Validation Error',
         description: 'Passwords do not match',
         status: 'error',
-        duration: 3000,
+        duration: 2000,
         isClosable: true,
       });
       setIsLoading(false);
@@ -89,7 +89,7 @@ const Register = () => {
         title: 'Validation Error',
         description: 'Please fill in all required fields',
         status: 'error',
-        duration: 3000,
+        duration: 2000,
         isClosable: true,
       });
       setIsLoading(false);
@@ -121,7 +121,7 @@ const Register = () => {
           title: 'Account Created! 🎉',
           description: 'Welcome! You can now sign in with your new account.',
           status: 'success',
-          duration: 5000,
+          duration: 2000,
           isClosable: true,
         });
 
@@ -134,7 +134,7 @@ const Register = () => {
           title: 'Registration Failed',
           description: errorMessage,
           status: 'error',
-          duration: 5000,
+          duration: 2000,
           isClosable: true,
         });
       }
@@ -145,7 +145,7 @@ const Register = () => {
         title: 'Network Error',
         description: errorMessage,
         status: 'error',
-        duration: 5000,
+        duration: 2000,
         isClosable: true,
       });
     } finally {
