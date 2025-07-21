@@ -116,7 +116,6 @@ const Register = () => {
           username: formData.email,
           password: formData.password
         }));
-
         toast({
           title: 'Account Created! 🎉',
           description: 'Welcome! You can now sign in with your new account.',
@@ -124,8 +123,7 @@ const Register = () => {
           duration: 2000,
           isClosable: true,
         });
-
-        router.push('/login');
+        setTimeout(() => router.push('/login'), 200);
       } else {
         const data = await response.json();
         const errorMessage = data.detail || 'Registration failed';

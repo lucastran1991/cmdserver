@@ -49,10 +49,10 @@ const NavLink = ({ children, href }: { children: React.ReactNode; href: string }
 };
 
 export default function Navbar() {
+  const { isAuthenticated } = useAuthStore();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { colorMode, toggleColorMode } = useColorMode();
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");

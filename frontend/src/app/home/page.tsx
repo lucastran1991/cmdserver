@@ -19,12 +19,16 @@ import {
 } from '@chakra-ui/react';
 import { FaRocket, FaCog, FaUsers, FaServer, FaSignOutAlt } from 'react-icons/fa';
 import { useAuthStore } from '../../store/authStore';
+import { log } from "console";
 
 export default function Home() {
-  const { isAuthenticated, logout } = useAuthStore();
+  const { isAuthenticated, token, logout } = useAuthStore(state => ({
+    isAuthenticated: state.isAuthenticated,
+    token: state.token,
+    logout: state.logout,
+  }));
   const [isLogin, setIsLogin] = useState(false);
   const router = useRouter();
-  const { token } = useAuthStore();
   const toast = useToast();
 
   useEffect(() => {
@@ -45,8 +49,8 @@ export default function Home() {
   const cardBg = useColorModeValue('white', 'gray.800');
 
   const handleLogout = async () => {
-    if (!isAuthenticated) return;
-    logout();
+    if (!isAuthenticated) { logout(); }
+    setTimeout(() => router.push('/login'), 200);
   };
 
   if (!isLogin) {

@@ -41,7 +41,7 @@ interface Target {
 }
 
 export default function TargetsPage() {
-  const { isAuthenticated, token, logout } = useAuthStore();
+  const { isAuthenticated, logout } = useAuthStore()
   const [isLoading, setIsLoading] = useState(true);
   const [isLogin, setIsLogin] = useState(true);
   const [isInit, setIsInit] = useState(false);
@@ -123,31 +123,32 @@ export default function TargetsPage() {
   };
 
   const handleLogout = async () => {
-    if (!isAuthenticated) return;
+    if (isAuthenticated) { logout(); }
+    router.replace("/login");
 
-    try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const response = await fetch(`${API_BASE_URL}/auth/jwt/logout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token }),
-      });
-      toast({
-        title: 'Logged Out',
-        description: 'You have been successfully logged out',
-        status: 'info',
-        duration: 2000,
-        isClosable: true,
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      setIsLogin(false);
-      logout();
-      router.replace("/login");
-    }
+    // try {
+    //   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    //   const response = await fetch(`${API_BASE_URL}/auth/jwt/logout`, {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({ token }),
+    //   });
+    //   toast({
+    //     title: 'Logged Out',
+    //     description: 'You have been successfully logged out',
+    //     status: 'info',
+    //     duration: 2000,
+    //     isClosable: true,
+    //   });
+    // } catch (error) {
+    //   console.error("Logout error:", error);
+    // } finally {
+    //   // setIsLogin(false);
+    //   logout();
+    //   router.replace("/login");
+    // }
   };
 
   // Card display for targets
@@ -171,7 +172,7 @@ export default function TargetsPage() {
           }}
           transition="all 0.3s ease"
           onClick={() => {
-            router.push(`/target_details?id=${target.id}`);
+            setTimeout(() => router.push(`/target_details?id=${target.id}`), 200);
           }}
         >
           <CardBody p={0}>

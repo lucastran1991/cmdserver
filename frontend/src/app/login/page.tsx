@@ -100,7 +100,7 @@ const Login = () => {
           duration: 2000,
           isClosable: true,
         });
-        setTimeout(() => router.push('/preload'), 500);
+        setTimeout(() => router.push('/preload'), 200);
       } else {
         setLoginError(data.detail || 'Login failed');
         toast({

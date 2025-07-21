@@ -159,31 +159,32 @@ export default function TargetDetails() {
   };
 
   const handleLogout = async () => {
-    if (!isAuthenticated) return;
-
-    try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const response = await fetch(`${API_BASE_URL}/auth/jwt/logout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token }),
-      });
-      toast({
-        title: 'Logged Out',
-        description: 'You have been successfully logged out',
-        status: 'info',
-        duration: 2000,
-        isClosable: true,
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      setIsLogin(false);
-      logout();
-      router.replace("/login");
-    }
+    if (isAuthenticated) { logout(); }
+    router.replace("/login");
+    
+    // try {
+    //   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    //   const response = await fetch(`${API_BASE_URL}/auth/jwt/logout`, {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({ token }),
+    //   });
+    //   toast({
+    //     title: 'Logged Out',
+    //     description: 'You have been successfully logged out',
+    //     status: 'info',
+    //     duration: 2000,
+    //     isClosable: true,
+    //   });
+    // } catch (error) {
+    //   console.error("Logout error:", error);
+    // } finally {
+    //   setIsLogin(false);
+    //   logout();
+    //   router.replace("/login");
+    // }
   };
 
   const handleAction = async (action: string) => {
@@ -454,7 +455,9 @@ export default function TargetDetails() {
           variant="solid"
           fontWeight="bold"
           size="lg"
-          onClick={() => router.push('/targets')}
+          onClick={() => {
+            setTimeout(() => router.push('/targets'), 200);
+          }}
           _hover={{
             transform: 'translateX(-5px)',
           }}
