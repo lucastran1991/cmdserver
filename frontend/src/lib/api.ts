@@ -37,8 +37,6 @@ export const API_ENDPOINTS = {
 
 } as const;
 
-import { useAuthStore } from '@/store/authStore';
-
 // API client configuration
 export const apiClient = {
   baseURL: API_BASE_URL,
@@ -51,7 +49,7 @@ export const apiClient = {
 
 // Helper function to get auth headers
 export const getAuthHeaders = () => {
-  const { token } = useAuthStore();
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 

@@ -27,7 +27,6 @@ import {
 } from '@chakra-ui/react';
 import { MdStorage, MdLogout, MdPlayArrow, MdStop, MdCloudUpload } from 'react-icons/md';
 import { useAuthStore } from '@/store/authStore';
-import { log } from "console";
 
 interface Target {
   id?: string | number;
