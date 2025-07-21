@@ -79,7 +79,7 @@ const Login = () => {
     setLoginError('');
 
     try {
-      const result = await fetch(API_ENDPOINTS.LOGIN, {
+      const response = await fetch(API_ENDPOINTS.LOGIN, {
         method: 'POST',
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
@@ -88,11 +88,11 @@ const Login = () => {
         }),
       });
 
-      const data = await result.json();
-
-      if (result.ok && data.access_token) {
+      const data = await response.json();
+      if (response.ok && data.access_token) {
+        const token = data.access_token;
+        console.log('Login successful:', data);
         setToken(data.access_token);
-
         toast({
           title: "Login successful!",
           description: "Welcome back to CMD Server.",
@@ -100,7 +100,6 @@ const Login = () => {
           duration: 2000,
           isClosable: true,
         });
-
         setTimeout(() => router.push('/preload'), 500);
       } else {
         setLoginError(data.detail || 'Login failed');

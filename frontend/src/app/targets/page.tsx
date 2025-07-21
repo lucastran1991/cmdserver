@@ -40,8 +40,9 @@ interface Target {
   server_role?: string;
 }
 
-export default function Home() {
+export default function TargetsPage() {
   const { isAuthenticated, token, logout } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(true);
   const [isLogin, setIsLogin] = useState(true);
   const [isInit, setIsInit] = useState(false);
   const [targetList, setTargetList] = useState<Target[]>([]);
@@ -67,29 +68,59 @@ export default function Home() {
   }, [router]);
 
   useEffect(() => {
-    const fetchTargets = async () => {
-      if (isLogin) {
-        try {
-          const response = await makeAuthenticatedRequest(API_ENDPOINTS.TARGETS);
-          const data = await response.json();
-          setTargetList(data);
-          setIsInit(true);
-        } catch (error) {
-          console.error(error);
-          toast({
-            title: 'Error loading targets',
-            description: 'Failed to fetch target list. Please try again.',
-            status: 'error',
-            duration: 2000,
-            isClosable: true,
-          });
-          setIsInit(true);
-        }
+    if (isLogin) {
+      if (!isInit) {
+        setIsLoading(true);
+        fetchTargets();
       }
-    };
-
-    fetchTargets();
+    }
   }, [isLogin, toast]);
+
+  const fetchTargets = async () => {
+    try {
+      const response = await makeAuthenticatedRequest(API_ENDPOINTS.TARGETS);
+      const data = await response.json();
+      console.log("Fetched targets:", data);
+      setTargetList(data);
+      for (const target of data) {
+        target.server_status = await checkServerStatus(target);
+      }
+      setIsInit(true);
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Error loading targets',
+        description: 'Failed to fetch target list. Please try again.',
+        status: 'error',
+        duration: 2000,
+        isClosable: true,
+      });
+      setIsInit(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const checkServerStatus = async (target: Target): Promise<boolean> => {
+    if (!isAuthenticated) return false;
+
+    try {
+      const API_BASE_URL = (process.env.NEXT_PUBLIC_HOST || "http://localhost") + ":" + target.server_port;
+      const auth_key = process.env.NEXTAUTH_SECRET || "HWF-SVPO37JI67N3X3WAHP42ZXURCRQA6S5TT";
+      console.log("Checking server status for:", target.name, "at", API_BASE_URL);
+      const response = await fetch(`${API_BASE_URL}/fid-auth`, {
+        method: "GET",
+        headers: {
+          'x-hwf-server-key': auth_key,
+        }
+      });
+      console.log("Server status response:", response);
+      return response.ok;
+    } catch (error) {
+      console.error('Server check failed:', error);
+      return false;
+    }
+  };
 
   const handleLogout = async () => {
     if (!isAuthenticated) return;
@@ -257,6 +288,31 @@ export default function Home() {
     </VStack>
   );
 
+  if (isLoading) {
+    return (
+      <Box
+        minH="100vh"
+        bgGradient={bgGradient}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        p={4}
+      >
+        <VStack spacing={4}>
+          <Spinner
+            size="xl"
+            color="white"
+            thickness="4px"
+            speed="0.65s"
+          />
+          <Text color="white" fontSize="lg">
+            Loading target details...
+          </Text>
+        </VStack>
+      </Box>
+    );
+  }
+
   return (
     <>
       {!isLogin ? (
@@ -339,7 +395,7 @@ export default function Home() {
                   textAlign="center"
                   mb={4}
                 >
-                  You need to log in to continue. Please return to the login page.
+                  Bạn đã quay vào ô mất lượt. Session của bạn đã hết hạn.
                 </Text>
                 <Button
                   bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
@@ -465,14 +521,14 @@ export default function Home() {
               </VStack>
               <Box position="fixed" top={6} right={6} zIndex={50}>
                 <Button
-                  leftIcon={<MdLogout />}
-                  bgGradient="linear(135deg, red.400, pink.500, purple.600)"
+                  leftIcon={<MdLogout size={20} />}
+                  bgGradient="linear(135deg, purple.600, pink.600, red.600)"
                   color="white"
                   size="lg"
                   borderRadius="xl"
                   boxShadow="0 10px 25px rgba(0, 0, 0, 0.2)"
                   _hover={{
-                    bgGradient: "linear(135deg, purple.700, blue.600, red.500)",
+                    bgGradient: "linear(135deg, red.500, pink.500, purple.500)",
                     transform: 'scale(1.05)',
                     boxShadow: '0 15px 35px rgba(0, 0, 0, 0.3)',
                   }}

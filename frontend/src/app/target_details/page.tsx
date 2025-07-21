@@ -114,8 +114,8 @@ export default function TargetDetails() {
       const response = await makeAuthenticatedRequest(API_ENDPOINTS.TARGETS + `/${targetId}`);
       const data = await response.json();
       setTarget(data);
+      data.server_status = await checkServerStatus(data);
       setIsInit(true);
-      setIsLoading(false);
     } catch (error) {
       console.error(error);
       toast({
@@ -129,6 +129,27 @@ export default function TargetDetails() {
     } finally {
       console.log("Target details fetched successfully");
       setIsLoading(false);
+    }
+  };
+
+  const checkServerStatus = async (target: Target): Promise<boolean> => {
+    if (!isAuthenticated) return false;
+
+    try {
+      const API_BASE_URL = (process.env.NEXT_PUBLIC_HOST || "http://localhost") + ":" + target.server_port;
+      const auth_key = process.env.NEXTAUTH_SECRET || "HWF-SVPO37JI67N3X3WAHP42ZXURCRQA6S5TT";
+      console.log("Checking server status for:", target.name, "at", API_BASE_URL);
+      const response = await fetch(`${API_BASE_URL}/fid-auth`, {
+        method: "GET",
+        headers: {
+          'x-hwf-server-key': auth_key,
+        }
+      });
+      console.log("Server status response:", response);
+      return response.ok;
+    } catch (error) {
+      console.error('Server check failed:', error);
+      return false;
     }
   };
 
@@ -204,7 +225,7 @@ export default function TargetDetails() {
       });
 
       console.log(`Action ${action} response:`, response);
-      
+
       if (response.ok) {
         toast({
           title: 'Success',
@@ -345,7 +366,7 @@ export default function TargetDetails() {
                 textAlign="center"
                 mb={4}
               >
-                You need to log in to continue. Please return to the login page.
+                Bạn đã quay vào ô mất lượt. Session của bạn đã hết hạn.
               </Text>
               <Button
                 bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
