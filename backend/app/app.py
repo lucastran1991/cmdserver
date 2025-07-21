@@ -16,6 +16,7 @@ from app.db import get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.target import Target, get_target_db
 from uuid import UUID
+from time import time
 
 import subprocess
 import asyncio
@@ -221,16 +222,26 @@ async def pull_be_source(
 
             if pull_result["success"]:
                 if asynchronous:
-                    background_tasks.add_task(restart_server_task, target_id)
+                    background_tasks.add_task(
+                        restart_server_task,
+                        source_path=source_path,
+                        execute=execute,
+                        current_user=current_user,
+                    )
                     return {
                         "message": "Backend source updated successfully",
                         "path": source_path,
                         "success": True,
-                        "details": {"pull": pull_result, "restart": "waiting for background task"},
+                        "details": {
+                            "pull": pull_result,
+                            "restart": "waiting for background task",
+                        },
                     }
                 else:
                     restart_result = await restart_server_task(
-                        target_id, execute=execute, current_user=current_user
+                        source_path=source_path,
+                        execute=execute,
+                        current_user=current_user,
                     )
 
             else:
@@ -377,7 +388,12 @@ async def change_environment_and_restart(
             result = await execute_command(change_cmd, execute)
 
             if result["success"]:
-                background_tasks.add_task(restart_server_task, target_id)
+                background_tasks.add_task(
+                    restart_server_task,
+                    source_path=source_path,
+                    execute=execute,
+                    current_user=current_user,
+                )
                 return {
                     "message": f"Environment changed to {environment}",
                     "status": "restarting",
@@ -401,59 +417,74 @@ async def restart_server_endpoint(
     current_user=Depends(current_active_user),
 ):
     print("Restart the server")
-    if asynchronous:
-        background_tasks.add_task(restart_server_task, target_id, execute=execute)
-        return {"message": "Server restart initiated", "status": "restarting"}
-    else:
-        return await restart_server_task(
-            target_id, execute=execute, current_user=current_user
-        )
-
-
-# Background task to restart server
-async def restart_server_task(
-    target_id: UUID, execute: bool = False, current_user=Depends(current_active_user)
-):
-    print("Background task to restart server")
     try:
         async for db in get_async_session():
             config = await get_deployment_config(target_id, db)
             source_path = config["source"]
 
-            # Kill existing process
-            kill_astack_cmd = f"pwdx $(pidof java) 2>/dev/null | grep '{source_path}/server' | cut -d: -f1 | xargs -r kill"
-            kill_astack_result = await execute_command(kill_astack_cmd, execute)
-
-            # Kill co_engine process
-            kill_coengine_cmd = f"ps aux | grep '[p]ython.*{source_path}/pyastackcore' | awk '{{print $2}}' | xargs -r kill"
-            kill_coengine_result = await execute_command(kill_coengine_cmd, execute)
-
-            # Start server
-            start_astack_cmd = f"cd {source_path}/server/ && nohup java @java-options.txt -jar tql.engine2.4.jar > nohup.out 2>&1 &"
-            start_astack_result = await execute_command(start_astack_cmd, execute)
-
-            # Wait and start coengine
-            await asyncio.sleep(15)
-
-            coengine_cmd = f"cd {source_path} && nohup python {source_path}/pyastackcore/pyastackcore/co_engine.py > output.log &"
-            start_coengine_result = await execute_command(coengine_cmd, execute)
-
-            return {
-                "message": "Engine restarted successfully",
-                "path": source_path,
-                "success": True,
-                "details": {
-                    "kill_astack": kill_astack_result,
-                    "kill_coengine": kill_coengine_result,
-                    "start_astack": start_astack_result,
-                    "start_coengine": start_coengine_result,
-                },
-            }
+            if asynchronous:
+                background_tasks.add_task(
+                    restart_server_task,
+                    source_path=source_path,
+                    execute=execute,
+                    current_user=current_user,
+                )
+                return {"message": "Server restart initiated", "status": "restarting"}
+            else:
+                restart_result = await restart_server_task(
+                    source_path=source_path, execute=execute, current_user=current_user
+                )
 
     except Exception as e:
         print(f"Error in restart_server_task: {str(e)}")
 
+    return {
+        "message": "Backend source updated successfully",
+        "target_id": target_id,
+        "success": True,
+        "details": {"restart": restart_result},
+    }
+
+
+# Background task to restart server
+async def restart_server_task(
+    source_path: str = "",
+    execute: bool = False,
+    current_user=Depends(current_active_user),
+):
+    print("Background task to restart server")
+
+    # Kill existing process
+    kill_astack_cmd = f"pwdx $(pidof java) 2>/dev/null | grep '{source_path}/server' | cut -d: -f1 | xargs -r kill"
+    kill_astack_result = await execute_command(kill_astack_cmd, execute)
+
+    # Kill co_engine process
+    kill_coengine_cmd = f"ps aux | grep '[p]ython.*{source_path}/pyastackcore' | awk '{{print $2}}' | xargs -r kill"
+    kill_coengine_result = await execute_command(kill_coengine_cmd, execute)
+
+    # Start server
+    start_astack_cmd = f"cd {source_path}/server/ && nohup java @java-options.txt -jar tql.engine2.4.jar > nohup.out 2>&1 &"
+    start_astack_result = await execute_command(start_astack_cmd, execute)
+
+    # Wait and start coengine
+    await asyncio.sleep(15)
+
+    coengine_cmd = f"cd {source_path} && nohup python {source_path}/pyastackcore/pyastackcore/co_engine.py > output.log &"
+    start_coengine_result = await execute_command(coengine_cmd, execute)
+
     print("Server restart task completed")
+
+    return {
+        "message": "Engine restarted successfully",
+        "path": source_path,
+        "success": True,
+        "details": {
+            "kill_astack": kill_astack_result,
+            "kill_coengine": kill_coengine_result,
+            "start_astack": start_astack_result,
+            "start_coengine": start_coengine_result,
+        },
+    }
 
 
 # 8. View Error Logs
