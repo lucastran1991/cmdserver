@@ -24,6 +24,9 @@ import os
 import json
 import logging
 
+def log(message):
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    log(f"[{timestamp}] {message}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -116,16 +119,16 @@ async def get_deployment_config(
     db_target = result.scalar_one_or_none()
     if db_target is None:
         raise HTTPException(status_code=404, detail="Target not found")
-    print(f"Using server path: {db_target.server_path}")
+    log(f"Using server path: {db_target.server_path}")
     try:
         config_file_path = db_target.server_path + "/atomiton.env"
         if not os.path.exists(config_file_path):
             config_file_path = "./atomiton.env"
         with open(config_file_path, "r") as f:
             lines = f.readlines()
-            print("Config Env:   ", lines[1].strip())
-            print("Config Port:  ", lines[3].strip())
-            print("Config Source:", lines[5].strip())
+            log("Config Env:   ", lines[1].strip())
+            log("Config Port:  ", lines[3].strip())
+            log("Config Source:", lines[5].strip())
             return {
                 "Target": {
                     "server_name": db_target.name,
@@ -148,7 +151,7 @@ async def get_deployment_config(
 async def execute_command(
     command: str, execute: bool = True, cwd: Optional[str] = None
 ) -> Dict[str, Any]:
-    print(f"[CMD]: {command} in {cwd if cwd else 'current directory'}")
+    log(f"[CMD]: {command} in {cwd if cwd else 'current directory'}")
     if not execute:
         return {
             "success": True,
@@ -163,9 +166,9 @@ async def execute_command(
             cwd=cwd,
         )
         stdout, stderr = await process.communicate()
-        print(f"[CMD Status]: {process.returncode}")
+        log(f"[CMD Status]: {process.returncode}")
         if stdout:
-            print(f"[CMD Output]: {stdout.decode()}")
+            log(f"[CMD Output]: {stdout.decode()}")
         return {
             "success": process.returncode == 0,
             "stdout": stdout.decode(),
@@ -173,7 +176,7 @@ async def execute_command(
             "return_code": process.returncode,
         }
     except Exception as e:
-        print(f"[CMD Error]: {str(e)}")
+        log(f"[CMD Error]: {str(e)}")
         return {"success": False, "error": str(e), "return_code": -1}
 
 
@@ -187,11 +190,13 @@ async def pull_be_source(
     asynchronous: bool = False,
     current_user=Depends(current_active_user),
 ):
-    print("Deploy the latest Backend commit")
+    log("Deploy the latest Backend commit")
     try:
         async for db in get_async_session():
             config = await get_deployment_config(target_id, db)
             source_path = config["source"]
+
+            log(f"Source Path: {source_path}, Commit ID: {commit_id}, Execute: {execute}, asynchronous: {asynchronous}")
 
             if not commit_id:
                 commit_id = "dev"  # Default to dev branch if no commit ID is provided
@@ -270,7 +275,7 @@ async def pull_ui_source(
     execute: bool = False,
     current_user=Depends(current_active_user),
 ):
-    print("Deploy the latest UI commit")
+    log("Deploy the latest UI commit")
     try:
         async for db in get_async_session():
             config = await get_deployment_config(target_id, db)
@@ -323,7 +328,7 @@ async def re_schema(
     background_tasks: BackgroundTasks,
     current_user=Depends(current_active_user),
 ):
-    print("Execute re-schema process")
+    log("Execute re-schema process")
     try:
         async for db in get_async_session():
             config = await get_deployment_config(target_id, db)
@@ -338,7 +343,7 @@ async def re_schema(
 
 
 async def execute_reschema_process(source_path: str, execute: bool = False):
-    print("Background task for re-schema process")
+    log("Background task for re-schema process")
     commands = [
         f"sed -i '5s/production/development/' {source_path}/server/sff.auto.config.cdm",
         f"sleep 15",
@@ -361,7 +366,7 @@ async def change_environment_and_restart(
     environment: Optional[str] = None,
     current_user=Depends(current_active_user),
 ):
-    print("Change environment (development/production) and restart server")
+    log("Change environment (development/production) and restart server")
     if environment not in ["development", "production"]:
         raise HTTPException(
             status_code=400, detail="Environment must be 'development' or 'production'"
@@ -417,7 +422,7 @@ async def restart_server_endpoint(
     asynchronous: bool = False,
     current_user=Depends(current_active_user),
 ):
-    print("Restart the server")
+    log("Restart the server")
     try:
         async for db in get_async_session():
             config = await get_deployment_config(target_id, db)
@@ -437,7 +442,7 @@ async def restart_server_endpoint(
                 )
 
     except Exception as e:
-        print(f"Error in restart_server_task: {str(e)}")
+        log(f"Error in restart_server_task: {str(e)}")
 
     return {
         "message": "Backend source updated successfully",
@@ -453,7 +458,7 @@ async def restart_server_task(
     execute: bool = False,
     current_user=Depends(current_active_user),
 ):
-    print("Background task to restart server")
+    log("Background task to restart server")
 
     # Kill existing process
     kill_astack_cmd = f"pwdx $(pidof java) 2>/dev/null | grep '{source_path}/server' | cut -d: -f1 | xargs -r kill"
@@ -473,7 +478,7 @@ async def restart_server_task(
     coengine_cmd = f"cd {source_path} && nohup python {source_path}/pyastackcore/pyastackcore/co_engine.py > output.log &"
     start_coengine_result = await execute_command(coengine_cmd, execute)
 
-    print("Server restart task completed")
+    log("Server restart task completed")
 
     return {
         "message": "Engine restarted successfully",
@@ -493,7 +498,7 @@ async def restart_server_task(
 async def view_engine_logs(
     target_id: UUID, execute: bool = False, current_user=Depends(current_active_user)
 ):
-    print("Stream engine.log file")
+    log("Stream engine.log file")
     try:
         async for db in get_async_session():
             config = await get_deployment_config(target_id, db)
@@ -529,7 +534,7 @@ async def view_engine_logs(
 async def clear_cache(
     target_id: UUID, execute: bool = False, current_user=Depends(current_active_user)
 ):
-    print("Clear cached files")
+    log("Clear cached files")
     try:
         async for db in get_async_session():
             config = await get_deployment_config(target_id, db)
@@ -552,7 +557,7 @@ async def clear_cache(
 async def view_nohup_logs(
     target_id: UUID, execute: bool = False, current_user=Depends(current_active_user)
 ):
-    print("Stream nohup.out file")
+    log("Stream nohup.out file")
     try:
         async for db in get_async_session():
             config = await get_deployment_config(target_id, db)
@@ -585,7 +590,7 @@ async def view_nohup_logs(
 async def view_co_engine_logs(
     target_id: UUID, execute: bool = False, current_user=Depends(current_active_user)
 ):
-    print("Stream co_engine output.log file")
+    log("Stream co_engine output.log file")
     try:
         async for db in get_async_session():
             config = await get_deployment_config(target_id, db)
@@ -618,7 +623,7 @@ async def view_co_engine_logs(
 async def pull_veolia_plugin(
     target_id: UUID, execute: bool = False, current_user=Depends(current_active_user)
 ):
-    print("Deploy the latest Veolia Plugin commit")
+    log("Deploy the latest Veolia Plugin commit")
     try:
         async for db in get_async_session():
             config = await get_deployment_config(target_id, db)
@@ -655,7 +660,7 @@ async def pull_veolia_plugin(
 async def kill_all_engines(
     target_id: UUID, execute: bool = False, current_user=Depends(current_active_user)
 ):
-    print("Kill all running engines")
+    log("Kill all running engines")
     try:
         async for db in get_async_session():
             config = await get_deployment_config(target_id, db)
@@ -687,7 +692,7 @@ async def kill_all_engines(
 async def view_error_logs_only(
     target_id: UUID, execute: bool = False, current_user=Depends(current_active_user)
 ):
-    print("Stream only error logs from nohup.out")
+    log("Stream only error logs from nohup.out")
     try:
         async for db in get_async_session():
             config = await get_deployment_config(target_id, db)
@@ -721,7 +726,7 @@ async def view_error_logs_only(
 async def get_deployment_status(
     target_id: UUID, execute: bool = False, current_user=Depends(current_active_user)
 ):
-    print("Get current deployment status")
+    log("Get current deployment status")
     try:
         async for db in get_async_session():
             config = await get_deployment_config(target_id, db)
@@ -770,7 +775,7 @@ async def get_deployment_status(
 
 @app.get("/")
 async def root():
-    print("Root endpoint with API documentation links")
+    log("Root endpoint with API documentation links")
     return {
         "message": "CMD Server API",
         "version": "1.0.0",
