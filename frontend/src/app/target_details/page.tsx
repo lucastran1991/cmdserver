@@ -128,7 +128,7 @@ export default function TargetDetails() {
 
     try {
       const API_BASE_URL = (process.env.NEXT_PUBLIC_HOST || "http://localhost") + ":" + target.server_port;
-      const auth_key = process.env.NEXTAUTH_SECRET || "HWF-SVPO37JI67N3X3WAHP42ZXURCRQA6S5TT";
+      // const auth_key = process.env.NEXTAUTH_SECRET || "HWF-TEST";
       console.log("Checking server status for:", target.name, "at", API_BASE_URL);
       const response = await fetch(`${API_BASE_URL}/fid-auth`, {
         method: "GET"
@@ -223,7 +223,7 @@ export default function TargetDetails() {
   };
 
   const getStatusColor = (status?: boolean) => {
-    return status ? 'green' : 'red';
+    return status ? 'green' : 'gray';
   };
 
   const getUsageColor = (usage: number) => {
