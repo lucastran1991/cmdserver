@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { API_ENDPOINTS, makeAuthenticatedRequest } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/api";
 import {
   Box,
   Button,
@@ -71,11 +71,9 @@ interface Target {
 export default function TargetDetails() {
   const { isAuthenticated, token, logout } = useAuthStore();
   const [target, setTarget] = useState<Target | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLogin, setIsLogin] = useState(true);
   const [isInit, setIsInit] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDebug, setIsDebug] = useState(false);
-  const [error, setError] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
@@ -91,27 +89,20 @@ export default function TargetDetails() {
   const statBg = useColorModeValue('white', 'gray.700');
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (!isAuthenticated) {
-        setIsLogin(false);
-      } else {
-        setIsLogin(true);
-      }
+    if (isAuthenticated && targetId && !isInit) {
+      setIsLoading(true);
+      fetchTargetDetails();
     }
-  }, [router]);
-
-  useEffect(() => {
-    if (isLogin && targetId) {
-      if (!isInit) {
-        setIsLoading(true);
-        fetchTargetDetails();
-      }
-    }
-  }, [isLogin, toast]);
+  }, [isAuthenticated]);
 
   const fetchTargetDetails = async () => {
     try {
-      const response = await makeAuthenticatedRequest(API_ENDPOINTS.TARGETS + `/${targetId}`);
+      const target_endpoint = API_ENDPOINTS.TARGETS + `/${targetId}`;
+      const response = await fetch(target_endpoint, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       setTarget(data);
       data.server_status = await checkServerStatus(data);
@@ -140,10 +131,7 @@ export default function TargetDetails() {
       const auth_key = process.env.NEXTAUTH_SECRET || "HWF-SVPO37JI67N3X3WAHP42ZXURCRQA6S5TT";
       console.log("Checking server status for:", target.name, "at", API_BASE_URL);
       const response = await fetch(`${API_BASE_URL}/fid-auth`, {
-        method: "GET",
-        headers: {
-          'x-hwf-server-key': auth_key,
-        }
+        method: "GET"
       });
       console.log("Server status response:", response);
       return response.ok;
@@ -160,31 +148,14 @@ export default function TargetDetails() {
 
   const handleLogout = async () => {
     if (isAuthenticated) { logout(); }
-    router.replace("/login");
-    
-    // try {
-    //   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    //   const response = await fetch(`${API_BASE_URL}/auth/jwt/logout`, {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify({ token }),
-    //   });
-    //   toast({
-    //     title: 'Logged Out',
-    //     description: 'You have been successfully logged out',
-    //     status: 'info',
-    //     duration: 2000,
-    //     isClosable: true,
-    //   });
-    // } catch (error) {
-    //   console.error("Logout error:", error);
-    // } finally {
-    //   setIsLogin(false);
-    //   logout();
-    //   router.replace("/login");
-    // }
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+      status: "info",
+      duration: 2000,
+      isClosable: true,
+    });
+    setTimeout(() => router.replace("/login"), 500);
   };
 
   const handleAction = async (action: string) => {
@@ -261,32 +232,7 @@ export default function TargetDetails() {
     return 'red';
   };
 
-  if (isLoading) {
-    return (
-      <Box
-        minH="100vh"
-        bgGradient={bgGradient}
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        p={4}
-      >
-        <VStack spacing={4}>
-          <Spinner
-            size="xl"
-            color="white"
-            thickness="4px"
-            speed="0.65s"
-          />
-          <Text color="white" fontSize="lg">
-            Loading target details...
-          </Text>
-        </VStack>
-      </Box>
-    );
-  }
-
-  if (error || !target) {
+  if (!target || !isAuthenticated) {
     return (
       <Box
         minH="100vh"
@@ -411,6 +357,31 @@ export default function TargetDetails() {
               }
             }
           `}</style>
+      </Box>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <Box
+        minH="100vh"
+        bgGradient={bgGradient}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        p={4}
+      >
+        <VStack spacing={4}>
+          <Spinner
+            size="xl"
+            color="white"
+            thickness="4px"
+            speed="0.65s"
+          />
+          <Text color="white" fontSize="lg">
+            Loading target details...
+          </Text>
+        </VStack>
       </Box>
     );
   }
