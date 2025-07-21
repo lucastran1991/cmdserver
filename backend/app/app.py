@@ -203,16 +203,18 @@ async def pull_be_source(
                 "sleep 2",
                 "git pull",
                 f"cd {source_path}",
-                "mkdir -p temp_server",
-                f"rsync -av {source_path}/source_code/atprofveolia/server/ {source_path}/source_code/temp_server/",
-                "rm -rf source_code/temp_server/sff.sqldb.data/*",
-                "rm -rf source_code/temp_server/sff.auto.launch/*",
-                "rm -rf source_code/temp_server/spaces/reports/*",
-                "rm -rf source_code/temp_server/ui/*",
-                "rm -rf source_code/temp_server/config/*",
-                "rm -rf source_code/temp_server/spaces/*",
+                "mkdir -p temp_backend",
+                f"rsync -av {source_path}/source_code/atprofveolia/server/ {source_path}/source_code/temp_backend/",
+                "rm -rf source_code/temp_backend/sff.sqldb.data/*",
+                "rm -rf source_code/temp_backend/sff.auto.launch/*",
+                "rm -rf source_code/temp_backend/spaces/reports/*",
+                "rm -rf source_code/temp_backend/ui/*",
+                "rm -rf source_code/temp_backend/config/*",
+                "rm -rf source_code/temp_backend/spaces/*",
+                f"cd {source_path}/source_code/temp_backend",
                 "rm -f *.log *.out *.sh *.cdm, *.py *.jar *.xml",
-                f"rsync -av {source_path}/source_code/temp_server/ {source_path}/server/"
+                f"rsync -av {source_path}/source_code/temp_backend/ {source_path}/server/",
+                f"cd {source_path}",
             ]
             command = " && ".join(commands)
             pull_result = await execute_command(command, execute=execute)
@@ -222,7 +224,9 @@ async def pull_be_source(
                     background_tasks.add_task(restart_server_task, target_id)
                     return {
                         "message": "Backend source updated successfully",
-                        "status": "restarting",
+                        "path": source_path,
+                        "success": True,
+                        "details": {"pull": pull_result, "restart": "waiting for background task"},
                     }
                 else:
                     restart_result = await restart_server_task(
@@ -246,53 +250,13 @@ async def pull_be_source(
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
-# 2. Pull Specific Backend Source
-@app.get("/api/deployment/pull-specific-be-source")
-async def pull_specific_be_source(
-    target_id: UUID,
-    background_tasks: BackgroundTasks,
-    execute: bool = False,
-    commit_id: Optional[str] = None,
-    current_user=Depends(current_active_user),
-):
-    print("Deploy a specific Backend commit")
-    if not commit_id:
-        raise HTTPException(status_code=400, detail="Commit ID is required")
-
-    try:
-        async for db in get_async_session():
-            config = await get_deployment_config(target_id, db)
-            source_path = config["source"]
-
-            commands = [
-                f"cd {source_path}/source_code/atprofveolia/",
-                "git fetch",
-                f"git checkout {commit_id}",
-                f"cd {source_path}",
-            ]
-            command = " && ".join(commands)
-            result = await execute_command(command, execute)
-
-            if result["success"]:
-                background_tasks.add_task(restart_server_task, target_id)
-                return {
-                    "message": f"Backend source updated to commit {commit_id}",
-                    "status": "restarting",
-                }
-            else:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to update to commit {commit_id}: {result.get('stderr', result.get('error'))}",
-                )
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
-
-
 # 3. Pull UI Source
 @app.get("/api/deployment/pull-ui-source")
 async def pull_ui_source(
-    target_id: UUID, execute: bool = False, current_user=Depends(current_active_user)
+    target_id: UUID,
+    commit_id: Optional[str] = None,
+    execute: bool = False,
+    current_user=Depends(current_active_user),
 ):
     print("Deploy the latest UI commit")
     try:
@@ -300,65 +264,42 @@ async def pull_ui_source(
             config = await get_deployment_config(target_id, db)
             source_path = config["source"]
 
-            commands = [
-                f"cd {source_path}/source_code/atprofveoliaui/",
-                "git checkout build",
-                "sleep 2",
-                "git pull",
-                f"rm -rf {source_path}/server/ui/*",
-                f"rsync -av --exclude='config' {source_path}/source_code/atprofveoliaui/api-1.0/ {source_path}/server/ui/",
-                f"cd {source_path}",
-            ]
-            command = " && ".join(commands)
-            result = await execute_command(command, execute)
-
-            if result["success"]:
-                return {"message": "UI source updated successfully"}
-            else:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to update UI source: {result.get('stderr', result.get('error'))}",
+            if not commit_id:
+                commit_id = (
+                    "build"  # Default to build branch if no commit ID is provided
                 )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
-
-
-# 4. Pull Specific UI Source
-@app.get("/api/deployment/pull-specific-ui-source")
-async def pull_specific_ui_source(
-    target_id: UUID,
-    execute: bool = False,
-    commit_id: Optional[str] = None,
-    current_user=Depends(current_active_user),
-):
-    print("Deploy a specific UI commit")
-    if not commit_id:
-        raise HTTPException(status_code=400, detail="Commit ID is required")
-
-    try:
-        async for db in get_async_session():
-            config = await get_deployment_config(target_id, db)
-            source_path = config["source"]
 
             commands = [
                 f"cd {source_path}/source_code/atprofveoliaui/",
+                "git reset --hard",  # Reset to the latest commit
                 "git fetch",
                 f"git checkout {commit_id}",
+                "sleep 2",
+                "git pull",
+                f"cd {source_path}",
+                "mkdir -p temp_frontend",
+                f"cp -R {source_path}/server/ui/config {source_path}/temp_frontend/",
                 f"rm -rf {source_path}/server/ui/*",
-                f"rsync -av {source_path}/source_code/atprofveoliaui/api-1.0/ {source_path}/server/ui/",
+                f"rsync -av --exclude='config' {source_path}/source_code/atprofveoliaui/api-1.0/ {source_path}/server/ui/",
+                f"rsync -av {source_path}/temp_frontend/config/ {source_path}/server/ui/config/",
                 f"cd {source_path}",
             ]
-
             command = " && ".join(commands)
             result = await execute_command(command, execute)
 
             if result["success"]:
-                return {"message": f"UI source updated to commit {commit_id}"}
+                return {
+                    "message": "Frontend source updated successfully",
+                    "path": source_path,
+                    "success": True,
+                    "details": {"pull": command},
+                }
             else:
                 raise HTTPException(
                     status_code=500,
-                    detail=f"Failed to update UI to commit {commit_id}: {result.get('stderr', result.get('error'))}",
+                    detail=f"Failed to update Frontend source: {result.get('stderr', result.get('error'))}",
                 )
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
@@ -701,7 +642,7 @@ async def kill_all_engines(
                 "success": True,
                 "details": {
                     "kill_astack_cmd": kill_astack_result,
-                    "kill_coengine_cmd": kill_coengine_result
+                    "kill_coengine_cmd": kill_coengine_result,
                 },
             }
 

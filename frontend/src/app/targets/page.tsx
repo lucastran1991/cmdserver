@@ -415,7 +415,7 @@ export default function Home() {
                 fontSize={"md"}
                 borderRadius="xl"
                 _hover={{
-                  bgGradient: "linear(135deg, yellow.500, orange.600)",
+                  bgGradient: "linear(135deg, orange.500, blue.600)",
                   transform: 'translateY(-1px)',
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                 }}
