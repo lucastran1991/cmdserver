@@ -6,7 +6,7 @@ export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/auth/jwt/login`,
   LOGOUT: `${API_BASE_URL}/auth/jwt/logout`,
   REGISTER: `${API_BASE_URL}/auth/register`,
-  
+
   // Deployment
   PULL_BE_SOURCE: `${API_BASE_URL}/api/deployment/pull-be-source`,
   PULL_SPECIFIC_BE_SOURCE: `${API_BASE_URL}/api/deployment/pull-specific-be-source`,
@@ -18,24 +18,26 @@ export const API_ENDPOINTS = {
   CLEAR_CACHE: `${API_BASE_URL}/api/deployment/clear-cache`,
   PULL_VEOLIA_PLUGIN: `${API_BASE_URL}/api/deployment/pull-veolia-plugin`,
   KILL_ENGINES: `${API_BASE_URL}/api/deployment/kill-engines`,
-  
+
   // Logs
   ENGINE_LOGS: `${API_BASE_URL}/api/logs/engine`,
   NOHUP_LOGS: `${API_BASE_URL}/api/logs/nohup`,
   CO_ENGINE_LOGS: `${API_BASE_URL}/api/logs/co-engine`,
   ERROR_LOGS: `${API_BASE_URL}/api/logs/errors`,
-  
+
   // Status
   DEPLOYMENT_STATUS: `${API_BASE_URL}/api/deployment/status`,
   DEPLOYMENT_CONFIG: `${API_BASE_URL}/api/deployment/config`,
-  
+
   // Targets
   TARGETS: `${API_BASE_URL}/targets`,
 
   // User Preload Data
   USER_PRELOAD: `${API_BASE_URL}/preload`,
-  
+
 } as const;
+
+import { useAuthStore } from '@/store/authStore';
 
 // API client configuration
 export const apiClient = {
@@ -49,14 +51,14 @@ export const apiClient = {
 
 // Helper function to get auth headers
 export const getAuthHeaders = () => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+  const { token } = useAuthStore();
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
 // Helper function to make authenticated requests
 export const makeAuthenticatedRequest = async (url: string, options: RequestInit = {}) => {
   const authHeaders = getAuthHeaders();
-  
+
   return fetch(url, {
     ...options,
     headers: {

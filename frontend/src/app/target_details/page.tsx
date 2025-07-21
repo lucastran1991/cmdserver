@@ -40,8 +40,10 @@ import {
   MdCode,
   MdFolder,
   MdSchedule,
-  MdLogout
+  MdLogout,
+  MdOutlineSdStorage
 } from 'react-icons/md';
+import { useAuthStore } from '@/store/authStore';
 
 interface Target {
   id?: string | number;
@@ -67,6 +69,7 @@ interface Target {
 }
 
 export default function TargetDetails() {
+  const { isAuthenticated, token, logout } = useAuthStore();
   const [target, setTarget] = useState<Target | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -89,71 +92,53 @@ export default function TargetDetails() {
   const statBg = useColorModeValue('white', 'gray.700');
 
   useEffect(() => {
-    if (!targetId) {
-      setError('No target ID provided');
-      setIsLoading(false);
-      return;
+    if (typeof window !== "undefined") {
+      if (!isAuthenticated) {
+        setIsLogin(false);
+      } else {
+        setIsLogin(true);
+      }
     }
+  }, [router]);
 
-    fetchTargetDetails();
-  }, [targetId]);
+  useEffect(() => {
+    if (isLogin) {
+      if (!targetId) {
+        setError('No target ID provided');
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("Fetching target details for ID:", targetId);
+      fetchTargetDetails();
+    } else {
+      console.log("User is logged in, skipping target details fetch");
+      setIsInit(true);
+    }
+  }, [isLogin, targetId]);
 
   const fetchTargetDetails = async () => {
     try {
       setIsLoading(true);
-      if (isLogin) {
-          try {
-            const response = await makeAuthenticatedRequest(API_ENDPOINTS.TARGETS);
-            const data = await response.json();
-            // setTargetList(data);
-            setIsInit(true);
-          } catch (error) {
-            console.error(error);
-            toast({
-              title: 'Error loading targets',
-              description: 'Failed to fetch target list. Please try again.',
-              status: 'error',
-              duration: 5000,
-              isClosable: true,
-            });
-            setIsInit(true);
-          }
-        }
 
-      // Mock data for demonstration
-      const mockTarget: Target = {
-        id: targetId || 'unknown',
-        name: `Production Server ${targetId || 'unknown'}`,
-        server_status: Math.random() > 0.5,
-        description: 'Main production server handling user authentication and API services',
-        server_tag: 'prod-api',
-        server_alias: `api-server-${targetId}`,
-        server_path: '/opt/applications/api-server',
-        server_port: 8000 + parseInt(targetId as string),
-        server_role: 'API Server',
-        created_at: '2024-01-15T10:30:00Z',
-        updated_at: '2024-12-20T14:45:00Z',
-        cpu_usage: Math.floor(Math.random() * 100),
-        memory_usage: Math.floor(Math.random() * 100),
-        disk_usage: Math.floor(Math.random() * 100),
-        uptime: '15 days, 4 hours, 23 minutes',
-        last_deployment: '2024-12-19T09:15:00Z',
-        environment: 'production',
-        version: 'v2.4.1',
-        dependencies: ['Node.js v18.17.0', 'MongoDB v6.0', 'Redis v7.0', 'Nginx v1.22'],
-        logs: [
-          '[2024-12-20 14:45:12] INFO: Server started successfully',
-          '[2024-12-20 14:44:58] INFO: Database connection established',
-          '[2024-12-20 14:44:45] WARN: High memory usage detected',
-          '[2024-12-20 14:43:30] INFO: API endpoint /health responded with 200',
-          '[2024-12-20 14:42:15] ERROR: Failed to connect to external service'
-        ]
-      };
+      try {
+        const response = await makeAuthenticatedRequest(API_ENDPOINTS.TARGETS + `/${targetId}`);
+        const data = await response.json();
+        console.log("Target details fetched successfully:", data);
+        setTarget(data);
+        setIsInit(true);
+      } catch (error) {
+        console.error(error);
+        toast({
+          title: 'Error loading targets',
+          description: 'Failed to fetch target list. Please try again.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+        setIsInit(true);
+      }
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      setTarget(mockTarget);
     } catch (error) {
       console.error('Error fetching target details:', error);
       setError('Failed to fetch target details. Please try again.');
@@ -161,7 +146,7 @@ export default function TargetDetails() {
         title: 'Error',
         description: 'Failed to fetch target details',
         status: 'error',
-        duration: 5000,
+        duration: 2000,
         isClosable: true,
       });
     } finally {
@@ -209,7 +194,7 @@ export default function TargetDetails() {
 
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -240,8 +225,8 @@ export default function TargetDetails() {
   };
 
   const handleLogout = async () => {
-    const token = localStorage.getItem("access_token");
-    if (!token) return;
+    if (!isAuthenticated) return;
+
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const response = await fetch(`${API_BASE_URL}/auth/jwt/logout`, {
@@ -251,7 +236,7 @@ export default function TargetDetails() {
         },
         body: JSON.stringify({ token }),
       });
-      localStorage.removeItem("access_token");
+      logout();
       setIsLogin(false);
       toast({
         title: 'Logged Out',
@@ -310,7 +295,31 @@ export default function TargetDetails() {
         alignItems="center"
         justifyContent="center"
         p={4}
+        position="relative"
+        overflow="hidden"
       >
+        {/* Animated background elements */}
+        <Box
+          position="absolute"
+          top="10%"
+          left="10%"
+          w="300px"
+          h="300px"
+          bg="rgba(255, 255, 255, 0.1)"
+          borderRadius="50%"
+          animation="float 6s ease-in-out infinite"
+        />
+        <Box
+          position="absolute"
+          bottom="10%"
+          right="10%"
+          w="200px"
+          h="200px"
+          bg="rgba(255, 255, 255, 0.05)"
+          borderRadius="50%"
+          animation="float 8s ease-in-out infinite reverse"
+        />
+
         <Container maxW="md" centerContent>
           <Card
             bg={cardBg}
@@ -320,29 +329,92 @@ export default function TargetDetails() {
             border="1px solid rgba(255, 255, 255, 0.2)"
             p={8}
             w="full"
+            position="relative"
+            overflow="hidden"
           >
             <CardBody>
               <VStack spacing={6} align="center">
-                <Icon as={MdInfo} boxSize={16} color="red.400" />
-                <VStack spacing={2} textAlign="center">
-                  <Heading size="lg" color={textColor}>
-                    Target Not Found
-                  </Heading>
-                  <Text color="gray.500">
-                    {error || 'The requested target could not be found.'}
-                  </Text>
-                </VStack>
-                <Button
-                  leftIcon={<MdArrowBack />}
-                  colorScheme="blue"
-                  onClick={() => router.push('/targets')}
+                <Box
+                  w="80px"
+                  h="80px"
+                  bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                  borderRadius="50%"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  boxShadow="0 10px 25px rgba(102, 126, 234, 0.4)"
+                  animation="pulse 2s infinite"
                 >
-                  Back to Targets
-                </Button>
+                  <Text fontSize="2xl" color="white">
+                    🔒
+                  </Text>
+                </Box>
               </VStack>
             </CardBody>
+            <VStack spacing={4} textAlign="center">
+              <Heading
+                size="xl"
+                bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
+                bgClip="text"
+                textAlign="center"
+                fontWeight="bold"
+              >
+                Invalid Access
+              </Heading>
+              <Text
+                fontSize="md"
+                color="gray.500"
+                textAlign="center"
+                mb={4}
+              >
+                You need to log in to continue. Please return to the login page.
+              </Text>
+              <Button
+                bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
+                color="white"
+                size="lg"
+                borderRadius="xl"
+                _hover={{
+                  bgGradient: "linear(135deg, blue.500, purple.600, pink.500)",
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+                }}
+                _active={{
+                  transform: 'translateY(0)',
+                }}
+                transition="all 0.2s"
+                onClick={() => {
+                  logout();
+                  setIsLogin(false);
+                  router.replace("/login");
+                }}
+              >
+                Back to Login
+              </Button>
+            </VStack>
           </Card>
         </Container>
+
+        {/* CSS Animations */}
+        <style jsx global>{`
+            @keyframes float {
+              0%, 100% {
+                transform: translateY(0px);
+              }
+              50% {
+                transform: translateY(-20px);
+              }
+            }
+            
+            @keyframes pulse {
+              0%, 100% {
+                transform: scale(1);
+              }
+              50% {
+                transform: scale(1.05);
+              }
+            }
+          `}</style>
       </Box>
     );
   }
@@ -380,7 +452,19 @@ export default function TargetDetails() {
 
       <Container maxW="7xl" p={6} position="relative" zIndex={1}>
         {/* Header */}
-        <VStack spacing={6} mb={8}>
+        <IconButton
+          aria-label="Back to targets"
+          icon={<MdArrowBack />}
+          colorScheme="whiteAlpha"
+          variant="solid"
+          size="lg"
+          onClick={() => router.push('/targets')}
+          _hover={{
+            transform: 'translateX(-2px)',
+          }}
+          transition="all 0.2s"
+        />
+        <VStack spacing={6} mb={8} mt={10} >
           <Flex
             direction={{ base: 'column', md: 'row' }}
             align="center"
@@ -389,18 +473,7 @@ export default function TargetDetails() {
             gap={4}
           >
             <HStack spacing={4}>
-              <IconButton
-                aria-label="Back to targets"
-                icon={<MdArrowBack />}
-                colorScheme="whiteAlpha"
-                variant="solid"
-                size="lg"
-                onClick={() => router.push('/targets')}
-                _hover={{
-                  transform: 'translateX(-2px)',
-                }}
-                transition="all 0.2s"
-              />
+              <Icon as={MdOutlineSdStorage} color="white" boxSize={16} />
               <VStack align="start" spacing={1}>
                 <Heading
                   size="xl"

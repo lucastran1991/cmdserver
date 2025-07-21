@@ -26,6 +26,8 @@ import {
   Switch
 } from '@chakra-ui/react';
 import { MdStorage, MdLogout, MdPlayArrow, MdStop, MdCloudUpload } from 'react-icons/md';
+import { useAuthStore } from '@/store/authStore';
+import { log } from "console";
 
 interface Target {
   id?: string | number;
@@ -40,6 +42,7 @@ interface Target {
 }
 
 export default function Home() {
+  const { isAuthenticated, token, logout } = useAuthStore();
   const [isLogin, setIsLogin] = useState(false);
   const [isInit, setIsInit] = useState(false);
   const [targetList, setTargetList] = useState<Target[]>([]);
@@ -56,8 +59,7 @@ export default function Home() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access_token");
-      if (!token) {
+      if (!isAuthenticated) {
         setIsLogin(false);
       } else {
         setIsLogin(true);
@@ -91,8 +93,7 @@ export default function Home() {
   }, [isLogin, toast]);
 
   const handleLogout = async () => {
-    const token = localStorage.getItem("access_token");
-    if (!token) return;
+    if (!isAuthenticated) return;
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const response = await fetch(`${API_BASE_URL}/auth/jwt/logout`, {
@@ -102,7 +103,7 @@ export default function Home() {
         },
         body: JSON.stringify({ token }),
       });
-      localStorage.removeItem("access_token");
+      logout();
       setIsLogin(false);
       toast({
         title: 'Logged Out',
@@ -143,7 +144,7 @@ export default function Home() {
         >
           <CardBody p={0}>
             {/* Header */}
-            <Flex align="center" justify="space-between" mb={6}>
+            <Flex align="center" justify="space-between" mb={2}>
               <HStack spacing={3}>
                 <Box
                   w="50px"
@@ -175,7 +176,7 @@ export default function Home() {
                 position="absolute"
                 top={4}
                 right={5}
-                colorScheme={target.server_status ? "green" : "red"}
+                colorScheme={target.server_status ? "green" : "gray"}
                 variant="solid"
                 borderRadius="full"
                 px={3}
@@ -189,7 +190,7 @@ export default function Home() {
             </Flex>
 
             {/* Server Details Grid */}
-            <Grid templateColumns="repeat(2, 1fr)" gap={4} mb={6}>
+            <Grid templateColumns="repeat(2, 1fr)" gap={2} mb={2}>
               <GridItem>
                 <VStack align="start" spacing={1}>
                   <Text fontSize="xs" color="gray.500" fontWeight="semibold">
@@ -233,7 +234,7 @@ export default function Home() {
             </Grid>
 
             {/* Role Badge */}
-            <Box mb={6}>
+            <Box mb={2}>
               <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={2}>
                 SERVER ROLE
               </Text>
@@ -354,7 +355,7 @@ export default function Home() {
                   }}
                   transition="all 0.2s"
                   onClick={() => {
-                    localStorage.removeItem("access_token");
+                    logout();
                     setIsLogin(false);
                     router.replace("/login");
                   }}

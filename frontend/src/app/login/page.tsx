@@ -29,8 +29,10 @@ import {
   useToast
 } from '@chakra-ui/react';
 import { MdVisibility, MdVisibilityOff, MdEmail, MdLock } from 'react-icons/md';
+import { useAuthStore } from '@/store/authStore';
 
 const Login = () => {
+  const { setToken } = useAuthStore();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -89,7 +91,7 @@ const Login = () => {
       const data = await result.json();
 
       if (result.ok && data.access_token) {
-        localStorage.setItem('access_token', data.access_token);
+        setToken(data.access_token);
 
         toast({
           title: "Login successful!",
