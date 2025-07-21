@@ -23,8 +23,7 @@ import {
   Icon,
   Flex,
   Divider,
-  Alert,
-  AlertIcon,
+  Switch
 } from '@chakra-ui/react';
 import { MdStorage, MdLogout, MdPlayArrow, MdStop, MdCloudUpload } from 'react-icons/md';
 
@@ -43,6 +42,7 @@ interface Target {
 export default function Home() {
   const [isLogin, setIsLogin] = useState(false);
   const [isInit, setIsInit] = useState(false);
+  const [isDebug, setIsDebug] = useState(false);
   const [targetList, setTargetList] = useState<Target[]>([]);
   const router = useRouter();
   const toast = useToast();
@@ -95,7 +95,7 @@ export default function Home() {
   const handleDeployBE = async (target: Target) => {
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const response = await fetch(`${API_BASE_URL}/api/deployment/pull-be-source?target_id=${target.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/deployment/pull-be-source?target_id=${target.id}&execute=${isDebug}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
@@ -128,7 +128,7 @@ export default function Home() {
   const handleDeployUI = async (target: Target) => {
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const response = await fetch(`${API_BASE_URL}/api/deployment/pull-be-source?target_id=${target.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/deployment/pull-be-source?target_id=${target.id}&execute=${isDebug}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
@@ -160,7 +160,7 @@ export default function Home() {
   const handleStart = async (target: Target) => {
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const response = await fetch(`${API_BASE_URL}/api/deployment/restart-server?target_id=${target.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/deployment/restart-server?target_id=${target.id}&execute=${isDebug}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
@@ -192,7 +192,7 @@ export default function Home() {
   const handleStop = async (target: Target) => {
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const response = await fetch(`${API_BASE_URL}/api/deployment/kill-engines?target_id=${target.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/deployment/kill-engines?target_id=${target.id}&execute=${isDebug}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
@@ -383,12 +383,12 @@ export default function Home() {
             {/* Action Buttons */}
             <HStack spacing={3} justify="flex-end">
               <Button
-                leftIcon={<MdCloudUpload size={24} color="white" />}
+                leftIcon={<MdCloudUpload size={22} color="white" />}
                 bgGradient="linear(135deg, yellow.400, orange.500)"
                 color="white"
                 size="sm"
                 height={"45px"}
-                width={"120px"}
+                width={"140px"}
                 fontSize={"md"}
                 borderRadius="xl"
                 _hover={{
@@ -406,12 +406,12 @@ export default function Home() {
                 Deploy BE
               </Button>
               <Button
-                leftIcon={<MdCloudUpload size={24} color="white" />}
-                bgGradient="linear(135deg, yellow.400, orange.500)"
+                leftIcon={<MdCloudUpload size={22} color="white" />}
+                bgGradient="linear(135deg, orange.400, blue.500)"
                 color="white"
                 size="sm"
                 height={"45px"}
-                width={"120px"}
+                width={"140px"}
                 fontSize={"md"}
                 borderRadius="xl"
                 _hover={{
@@ -429,12 +429,12 @@ export default function Home() {
                 Deploy UI
               </Button>
               <Button
-                leftIcon={<MdPlayArrow size={24} color="white" />}
+                leftIcon={<MdPlayArrow size={22} color="white" />}
                 bgGradient="linear(135deg, blue.400, green.500)"
                 color="white"
                 size="sm"
                 height={"45px"}
-                width={"120px"}
+                width={"140px"}
                 fontSize={"md"}
                 borderRadius="xl"
                 _hover={{
@@ -452,12 +452,12 @@ export default function Home() {
                 Start
               </Button>
               <Button
-                leftIcon={<MdStop size={24} color="white" />}
+                leftIcon={<MdStop size={22} color="white" />}
                 bgGradient="linear(135deg, red.400, pink.500)"
                 color="white"
                 size="sm"
                 height={"45px"}
-                width={"120px"}
+                width={"140px"}
                 fontSize={"md"}
                 borderRadius="xl"
                 _hover={{
@@ -545,64 +545,49 @@ export default function Home() {
                       🔒
                     </Text>
                   </Box>
-
-                  {!isInit ? (
-                    <VStack spacing={4}>
-                      <Spinner
-                        size="xl"
-                        color="purple.500"
-                        thickness="4px"
-                        speed="0.65s"
-                      />
-                      <Text color="gray.500" fontSize="lg">
-                        Loading...
-                      </Text>
-                    </VStack>
-                  ) : (
-                    <VStack spacing={4} textAlign="center">
-                      <Heading
-                        size="xl"
-                        bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
-                        bgClip="text"
-                        textAlign="center"
-                        fontWeight="bold"
-                      >
-                        Invalid Access
-                      </Heading>
-                      <Text
-                        fontSize="md"
-                        color="gray.500"
-                        textAlign="center"
-                        mb={4}
-                      >
-                        You need to log in to continue. Please return to the login page.
-                      </Text>
-                      <Button
-                        bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
-                        color="white"
-                        size="lg"
-                        borderRadius="xl"
-                        _hover={{
-                          bgGradient: "linear(135deg, blue.500, purple.600, pink.500)",
-                          transform: 'translateY(-2px)',
-                          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-                        }}
-                        _active={{
-                          transform: 'translateY(0)',
-                        }}
-                        transition="all 0.2s"
-                        onClick={() => {
-                          localStorage.removeItem("access_token");
-                          setIsLogin(false);
-                          router.replace("/login");
-                        }}
-                      >
-                        Back to Login
-                      </Button>
-                    </VStack>
-                  )}
                 </VStack>
               </CardBody>
+              <VStack spacing={4} textAlign="center">
+                <Heading
+                  size="xl"
+                  bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
+                  bgClip="text"
+                  textAlign="center"
+                  fontWeight="bold"
+                >
+                  Invalid Access
+                </Heading>
+                <Text
+                  fontSize="md"
+                  color="gray.500"
+                  textAlign="center"
+                  mb={4}
+                >
+                  You need to log in to continue. Please return to the login page.
+                </Text>
+                <Button
+                  bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
+                  color="white"
+                  size="lg"
+                  borderRadius="xl"
+                  _hover={{
+                    bgGradient: "linear(135deg, blue.500, purple.600, pink.500)",
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+                  }}
+                  _active={{
+                    transform: 'translateY(0)',
+                  }}
+                  transition="all 0.2s"
+                  onClick={() => {
+                    localStorage.removeItem("access_token");
+                    setIsLogin(false);
+                    router.replace("/login");
+                  }}
+                >
+                  Back to Login
+                </Button>
+              </VStack>
             </Card>
           </Container>
 
@@ -658,109 +643,137 @@ export default function Home() {
             zIndex={0}
           />
 
-          {/* Logout Button */}
-          <Box position="fixed" top={6} right={6} zIndex={50}>
-            <Button
-              leftIcon={<MdLogout />}
-              bgGradient="linear(135deg, red.400, pink.500, purple.600)"
-              color="white"
-              size="lg"
-              borderRadius="xl"
-              boxShadow="0 10px 25px rgba(0, 0, 0, 0.2)"
-              _hover={{
-                bgGradient: "linear(135deg, purple.700, blue.600, red.500)",
-                transform: 'scale(1.05)',
-                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.3)',
-              }}
-              _active={{
-                transform: 'scale(0.95)',
-              }}
-              transition="all 0.2s"
-              onClick={handleLogout}
-              fontWeight="bold"
-              animation="pulse 2s infinite"
-            >
-              Mời về cho
-            </Button>
-          </Box>
-
-          <Container maxW="6xl" p={6} position="relative" zIndex={1}>
-            {/* Header */}
-            <VStack spacing={8} mb={10}>
-              <Flex
-                direction={{ base: 'column', md: 'row' }}
-                align="center"
-                // justify="space-between"
-                w="full"
-                gap={4}
-              >
-                <Heading
-                  size="2xl"
-                  bgGradient="linear(135deg, blue.200, yellow.500, red.400)"
-                  bgClip="text"
-                  fontWeight="bold"
-                  textAlign={{ base: 'center', md: 'left' }}
-                >
-                  A-Stack Instances
-                </Heading>
-                <Badge
-                  bgGradient="linear(135deg, blue.200, purple.200, pink.200)"
-                  color="purple.900"
-                  borderRadius="full"
-                  px={6}
-                  py={2}
-                  fontSize="md"
-                  fontWeight="bold"
-                  textAlign="center"
-                  animation="bounce 2s infinite"
-                >
-                  {targetList.filter(target => target.server_status === true).length} Active
-                </Badge>
-              </Flex>
+          {!isInit ? (
+            <VStack spacing={4}>
+              <Spinner
+                size="xl"
+                color="purple.500"
+                thickness="4px"
+                speed="0.65s"
+              />
+              <Text color="gray.500" fontSize="lg">
+                Loading...
+              </Text>
             </VStack>
-
-            {/* Targets List or Empty State */}
-            {targetList.length > 0 ? (
-              <Box w="full">
-                {renderTargetCards()}
-              </Box>
-            ) : (
-              <Center minH="50vh">
-                <VStack spacing={6}>
-                  <Box
-                    w="120px"
-                    h="120px"
-                    bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                    borderRadius="50%"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    boxShadow="0 15px 35px rgba(102, 126, 234, 0.4)"
-                    animation="float 3s ease-in-out infinite"
+          ) : (
+            <Container maxW="6xl" p={6} position="relative" zIndex={1}>
+              {/* Header */}
+              <VStack spacing={8} mb={10}>
+                <Flex
+                  direction={{ base: 'column', md: 'row' }}
+                  align="center"
+                  // justify="space-between"
+                  w="full"
+                  gap={4}
+                >
+                  <Heading
+                    size="2xl"
+                    bgGradient="linear(135deg, blue.200, yellow.500, red.400)"
+                    bgClip="text"
+                    fontWeight="bold"
+                    textAlign={{ base: 'center', md: 'left' }}
                   >
-                    <Text fontSize="4xl" color="white">
-                      📦
-                    </Text>
-                  </Box>
-                  <VStack spacing={2} textAlign="center">
-                    <Heading
-                      size="xl"
-                      color="white"
+                    A-Stack Instances
+                  </Heading>
+                  {targetList.length > 0 ? (
+                    <Badge
+                      bgGradient="linear(135deg, blue.200, purple.200, pink.200)"
+                      color="purple.900"
+                      borderRadius="full"
+                      px={6}
+                      py={2}
+                      fontSize="md"
                       fontWeight="bold"
+                      textAlign="center"
+                      animation="bounce 2s infinite"
                     >
-                      No targets found
-                    </Heading>
-                    <Text
-                      fontSize="lg"
-                      color="whiteAlpha.700"
+                      {targetList.filter(target => target.server_status === true).length} Active
+                    </Badge>) : <></>}
+                </Flex>
+              </VStack>
+              <Box position="fixed" top={6} right={6} zIndex={50}>
+                <Button
+                  leftIcon={<MdLogout />}
+                  bgGradient="linear(135deg, red.400, pink.500, purple.600)"
+                  color="white"
+                  size="lg"
+                  borderRadius="xl"
+                  boxShadow="0 10px 25px rgba(0, 0, 0, 0.2)"
+                  _hover={{
+                    bgGradient: "linear(135deg, purple.700, blue.600, red.500)",
+                    transform: 'scale(1.05)',
+                    boxShadow: '0 15px 35px rgba(0, 0, 0, 0.3)',
+                  }}
+                  _active={{
+                    transform: 'scale(0.95)',
+                  }}
+                  transition="all 0.2s"
+                  onClick={handleLogout}
+                  fontWeight="bold"
+                  animation="pulse 2s infinite"
+                >
+                  Mời về cho
+                </Button>
+              </Box>
+
+              {targetList.length > 0 ? (
+                <Box w="full">
+                  {renderTargetCards()}
+                </Box>
+              ) : (
+                <Center minH="50vh">
+                  <VStack spacing={6}>
+                    <Box
+                      w="120px"
+                      h="120px"
+                      bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                      borderRadius="50%"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      boxShadow="0 15px 35px rgba(102, 126, 234, 0.4)"
+                      animation="float 3s ease-in-out infinite"
                     >
-                      Try adding a new target or check your connection.
-                    </Text>
+                      <Text fontSize="4xl" color="white">
+                        📦
+                      </Text>
+                    </Box>
+                    <VStack spacing={2} textAlign="center">
+                      <Heading
+                        size="xl"
+                        color="white"
+                        fontWeight="bold"
+                      >
+                        No targets found
+                      </Heading>
+                      <Text
+                        fontSize="lg"
+                        color="whiteAlpha.700"
+                      >
+                        Try adding a new target or check your connection.
+                      </Text>
+                    </VStack>
                   </VStack>
-                </VStack>
-              </Center>
-            )}
-          </Container>
+                </Center>
+              )}
+
+              <Flex justify="flex-end" mt={5}>
+                <HStack spacing={3}>
+                  <Text fontSize="md" color="white" fontWeight="bold">
+                    Debug Mode
+                  </Text>
+                  <Box>
+                    <Switch
+                      colorScheme="purple"
+                      size="lg"
+                      isChecked={isDebug}
+                      onChange={() => setIsDebug(!isDebug)}
+                    />
+                  </Box>
+                </HStack>
+              </Flex>
+            </Container>
+          )}
         </Box>
       )}
     </>
