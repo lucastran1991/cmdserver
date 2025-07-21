@@ -42,7 +42,6 @@ interface Target {
 export default function Home() {
   const [isLogin, setIsLogin] = useState(false);
   const [isInit, setIsInit] = useState(false);
-  const [isDebug, setIsDebug] = useState(false);
   const [targetList, setTargetList] = useState<Target[]>([]);
   const router = useRouter();
   const toast = useToast();
@@ -91,136 +90,6 @@ export default function Home() {
     fetchTargets();
   }, [isLogin, toast]);
 
-  // Helper functions for API calls
-  const handleDeployBE = async (target: Target) => {
-    try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const response = await fetch(`${API_BASE_URL}/api/deployment/pull-be-source?target_id=${target.id}&execute=${isDebug}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      });
-      if (response.ok) {
-        toast({
-          title: 'Deployment Started! 🚀',
-          description: `Server ${target.name} deployment latest DEV initiated`,
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-      } else {
-        throw new Error(response.statusText);
-      }
-    } catch (error) {
-      console.error("Error deploying server:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast({
-        title: 'Deployment Failed',
-        description: `Error deploying server: ${errorMessage}`,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
-
-  // Helper functions for API calls
-  const handleDeployUI = async (target: Target) => {
-    try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const response = await fetch(`${API_BASE_URL}/api/deployment/pull-be-source?target_id=${target.id}&execute=${isDebug}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      });
-      if (response.ok) {
-        toast({
-          title: 'Deployment Started! 🚀',
-          description: `Server ${target.name} deployment latest DEV initiated`,
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-      } else {
-        throw new Error(response.statusText);
-      }
-    } catch (error) {
-      console.error("Error deploying server:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast({
-        title: 'Deployment Failed',
-        description: `Error deploying server: ${errorMessage}`,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
-
-  const handleStart = async (target: Target) => {
-    try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const response = await fetch(`${API_BASE_URL}/api/deployment/restart-server?target_id=${target.id}&execute=${isDebug}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      });
-      if (response.ok) {
-        toast({
-          title: 'Server Started! ▶️',
-          description: `Server ${target.name} restart initiated`,
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-      } else {
-        throw new Error(response.statusText);
-      }
-    } catch (error) {
-      console.error("Error restarting server:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast({
-        title: 'Start Failed',
-        description: `Error restarting server: ${errorMessage}`,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
-
-  const handleStop = async (target: Target) => {
-    try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const response = await fetch(`${API_BASE_URL}/api/deployment/kill-engines?target_id=${target.id}&execute=${isDebug}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      });
-      if (response.ok) {
-        toast({
-          title: 'Server Stopped! ⏹️',
-          description: `Server ${target.name} is stopped`,
-          status: 'warning',
-          duration: 5000,
-          isClosable: true,
-        });
-      } else {
-        throw new Error(response.statusText);
-      }
-    } catch (error) {
-      console.error("Error stopping server:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast({
-        title: 'Stop Failed',
-        description: `Error stopping server: ${errorMessage}`,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
-
   const handleLogout = async () => {
     const token = localStorage.getItem("access_token");
     if (!token) return;
@@ -268,6 +137,9 @@ export default function Home() {
             boxShadow: '0 35px 60px -12px rgba(0, 0, 0, 0.3)',
           }}
           transition="all 0.3s ease"
+          onClick={() => {
+            router.push(`/target?id=${target.id}`);
+          }}
         >
           <CardBody p={0}>
             {/* Header */}
@@ -377,104 +249,6 @@ export default function Home() {
                 {target.server_role || "Unknown"}
               </Badge>
             </Box>
-
-            <Divider mb={6} />
-
-            {/* Action Buttons */}
-            <HStack spacing={3} justify="flex-end">
-              <Button
-                leftIcon={<MdCloudUpload size={22} color="white" />}
-                bgGradient="linear(135deg, yellow.400, orange.500)"
-                color="white"
-                size="sm"
-                height={"45px"}
-                width={"140px"}
-                fontSize={"md"}
-                borderRadius="xl"
-                _hover={{
-                  bgGradient: "linear(135deg, yellow.500, orange.600)",
-                  transform: 'translateY(-1px)',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                }}
-                _active={{
-                  transform: 'translateY(0)',
-                }}
-                transition="all 0.2s"
-                onClick={() => handleDeployBE(target)}
-                fontWeight="semibold"
-              >
-                Deploy BE
-              </Button>
-              <Button
-                leftIcon={<MdCloudUpload size={22} color="white" />}
-                bgGradient="linear(135deg, orange.400, blue.500)"
-                color="white"
-                size="sm"
-                height={"45px"}
-                width={"140px"}
-                fontSize={"md"}
-                borderRadius="xl"
-                _hover={{
-                  bgGradient: "linear(135deg, orange.500, blue.600)",
-                  transform: 'translateY(-1px)',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                }}
-                _active={{
-                  transform: 'translateY(0)',
-                }}
-                transition="all 0.2s"
-                onClick={() => handleDeployUI(target)}
-                fontWeight="semibold"
-              >
-                Deploy UI
-              </Button>
-              <Button
-                leftIcon={<MdPlayArrow size={22} color="white" />}
-                bgGradient="linear(135deg, blue.400, green.500)"
-                color="white"
-                size="sm"
-                height={"45px"}
-                width={"140px"}
-                fontSize={"md"}
-                borderRadius="xl"
-                _hover={{
-                  bgGradient: "linear(135deg, blue.500, green.600)",
-                  transform: 'translateY(-1px)',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                }}
-                _active={{
-                  transform: 'translateY(0)',
-                }}
-                transition="all 0.2s"
-                onClick={() => handleStart(target)}
-                fontWeight="semibold"
-              >
-                Start
-              </Button>
-              <Button
-                leftIcon={<MdStop size={22} color="white" />}
-                bgGradient="linear(135deg, red.400, pink.500)"
-                color="white"
-                size="sm"
-                height={"45px"}
-                width={"140px"}
-                fontSize={"md"}
-                borderRadius="xl"
-                _hover={{
-                  bgGradient: "linear(135deg, red.500, pink.600)",
-                  transform: 'translateY(-1px)',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                }}
-                _active={{
-                  transform: 'translateY(0)',
-                }}
-                transition="all 0.2s"
-                onClick={() => handleStop(target)}
-                fontWeight="semibold"
-              >
-                Stop
-              </Button>
-            </HStack>
           </CardBody>
         </Card>
       ))}
@@ -756,22 +530,6 @@ export default function Home() {
                   </VStack>
                 </Center>
               )}
-
-              <Flex justify="flex-end" mt={5}>
-                <HStack spacing={3}>
-                  <Text fontSize="md" color="white" fontWeight="bold">
-                    Debug Mode
-                  </Text>
-                  <Box>
-                    <Switch
-                      colorScheme="purple"
-                      size="lg"
-                      isChecked={isDebug}
-                      onChange={() => setIsDebug(!isDebug)}
-                    />
-                  </Box>
-                </HStack>
-              </Flex>
             </Container>
           )}
         </Box>

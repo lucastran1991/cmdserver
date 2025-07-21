@@ -1,5 +1,5 @@
 "use client";
-import { Box, Text, Stack, Icon, HStack } from "@chakra-ui/react";
+import { Box, Text, Stack, Icon, HStack, Flex, Switch } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -41,11 +41,11 @@ export default function LoadingScreen() {
   }, [visibleIndex, router]);
 
   return (
-    <Box 
-      minH="100vh" 
+    <Box
+      minH="100vh"
       bgGradient={bgGradient}
-      display="flex" 
-      justifyContent="center" 
+      display="flex"
+      justifyContent="center"
       alignItems="center"
       position="relative"
       overflow="hidden"
@@ -113,16 +113,16 @@ export default function LoadingScreen() {
               color={textColor}
               spacing={3}
             >
-              <Icon 
-                as={MdCheckCircleOutline} 
-                color="green.400" 
+              <Icon
+                as={MdCheckCircleOutline}
+                color="green.400"
                 boxSize={6}
                 filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
               />
               <Text>{msg}</Text>
             </MotionText>
           ))}
-          
+
           {/* Loading indicator for current step */}
           {visibleIndex < messages.length && (
             <HStack spacing={3} opacity={0.6}>

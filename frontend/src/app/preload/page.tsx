@@ -13,7 +13,8 @@ const messages = [
   "Loading user info",
   "Looking for EC2 sessions",
   "Prepare the user's base input",
-  "Update settings",
+  "Update SSH settings",
+  "Complete!",
 ];
 
 export default function LoadingScreen() {
@@ -26,17 +27,19 @@ export default function LoadingScreen() {
     'linear(to-br, blue.600, purple.700, pink.600)'
   );
   const cardBg = useColorModeValue('rgba(255, 255, 255, 0.95)', 'rgba(26, 32, 44, 0.95)');
-  const textColor = useColorModeValue('gray.800', 'white');
+  const textColor = useColorModeValue('blue.400', 'white');
 
   useEffect(() => {
     if (visibleIndex < messages.length) {
+      const random = Math.random() * (800 - 200) + 200;
       const timer = setTimeout(() => {
         setVisibleIndex((prev) => prev + 1);
-      }, 1000);
+      }, random);
       return () => clearTimeout(timer);
     } else {
       // Redirect after final message
-      setTimeout(() => router.push("/targets"), 1000);
+      const randomTotal = Math.random() * (1200 - 600) + 600;
+      setTimeout(() => router.push("/targets"), randomTotal);
     }
   }, [visibleIndex, router]);
 
@@ -108,15 +111,17 @@ export default function LoadingScreen() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: idx * 0.1 }}
-              fontSize="lg"
-              fontWeight="semibold"
+              fontSize="xl"
+              fontWeight="bold"
               color={textColor}
               spacing={3}
             >
               <Icon 
                 as={MdCheckCircleOutline} 
-                color="green.400" 
+                color="blue.400" 
                 boxSize={6}
+                fontSize="xl"
+                fontWeight="bold"
                 filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
               />
               <Text>{msg}</Text>
