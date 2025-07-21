@@ -23,14 +23,13 @@ import asyncio
 import os
 import json
 import logging
+import sys
 
 logging.basicConfig(
     format='[%(asctime)s] %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
     level=logging.INFO,
-    handlers=[
-        logging.StreamHandler()  # Output to stdout/stderr
-    ]
+    handlers=[logging.StreamHandler(sys.stdout)]
 )
 
 @asynccontextmanager
