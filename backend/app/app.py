@@ -213,7 +213,8 @@ async def pull_be_source(
                 "rm -rf source_code/temp_backend/config/*",
                 "rm -rf source_code/temp_backend/spaces/*",
                 f"cd {source_path}/source_code/temp_backend",
-                "rm -f *.log *.out *.sh *.cdm, *.py *.jar *.xml",
+                "rm -f *.log *.out *.sh *.cdm, *.py *.jar *.xml *.txt",
+                "rm -f sff.auto.config.cdm sff.auto.config.DEBUG.cdm sff.auto.config.docker.cdm",
                 f"rsync -av {source_path}/source_code/temp_backend/ {source_path}/server/",
                 f"cd {source_path}",
             ]
