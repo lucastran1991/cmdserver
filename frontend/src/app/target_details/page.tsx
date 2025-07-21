@@ -178,19 +178,19 @@ export default function TargetDetails() {
 
       switch (action) {
         case 'deploy_be':
-          endpoint = `/api/deployment/pull-be-source?target_id=${target.id}&execute=${isDebug}`;
+          endpoint = `/api/deployment/pull-be-source?target_id=${target.id}&execute=${!isDebug}&asynchronous=true`;
           successMessage = `Deployment latest BE for ${target.name}`;
           break;
         case 'deploy_ui':
-          endpoint = `/api/deployment/pull-ui-source?target_id=${target.id}&execute=${isDebug}`;
+          endpoint = `/api/deployment/pull-ui-source?target_id=${target.id}&execute=${!isDebug}`;
           successMessage = `Deployment latest UI for ${target.name}`;
           break;
         case 'start':
-          endpoint = `/api/deployment/restart-server?target_id=${target.id}&execute=${isDebug}`;
+          endpoint = `/api/deployment/restart-server?target_id=${target.id}&execute=${!isDebug}&asynchronous=true`;
           successMessage = `Server ${target.name} restart initiated`;
           break;
         case 'stop':
-          endpoint = `/api/deployment/kill-engines?target_id=${target.id}&execute=${isDebug}`;
+          endpoint = `/api/deployment/kill-engines?target_id=${target.id}&execute=${!isDebug}`;
           successMessage = `Server ${target.name} stopped`;
           break;
         default:
@@ -203,6 +203,8 @@ export default function TargetDetails() {
         },
       });
 
+      console.log(`Action ${action} response:`, response);
+      
       if (response.ok) {
         toast({
           title: 'Success',

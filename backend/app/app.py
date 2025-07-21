@@ -203,7 +203,7 @@ async def pull_be_source(
                 "sleep 2",
                 "git pull",
                 f"cd {source_path}",
-                "mkdir -p temp_backend",
+                "mkdir -p source_code/temp_backend",
                 f"rsync -av {source_path}/source_code/atprofveolia/server/ {source_path}/source_code/temp_backend/",
                 "rm -rf source_code/temp_backend/sff.sqldb.data/*",
                 "rm -rf source_code/temp_backend/sff.auto.launch/*",
@@ -277,11 +277,11 @@ async def pull_ui_source(
                 "sleep 2",
                 "git pull",
                 f"cd {source_path}",
-                "mkdir -p temp_frontend",
-                f"cp -R {source_path}/server/ui/config {source_path}/temp_frontend/",
+                "mkdir -p source_code/temp_frontend",
+                f"cp -R {source_path}/server/ui/config {source_path}/source_code/temp_frontend/",
                 f"rm -rf {source_path}/server/ui/*",
                 f"rsync -av --exclude='config' {source_path}/source_code/atprofveoliaui/api-1.0/ {source_path}/server/ui/",
-                f"rsync -av {source_path}/temp_frontend/config/ {source_path}/server/ui/config/",
+                f"rsync -av {source_path}/source_code/temp_frontend/config/ {source_path}/server/ui/config/",
                 f"cd {source_path}",
             ]
             command = " && ".join(commands)
