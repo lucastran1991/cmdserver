@@ -92,7 +92,40 @@ export default function Home() {
   }, [isLogin, toast]);
 
   // Helper functions for API calls
-  const handleDeploy = async (target: Target) => {
+  const handleDeployBE = async (target: Target) => {
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${API_BASE_URL}/api/deployment/pull-be-source?target_id=${target.id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+      if (response.ok) {
+        toast({
+          title: 'Deployment Started! 🚀',
+          description: `Server ${target.name} deployment latest DEV initiated`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+      } else {
+        throw new Error(response.statusText);
+      }
+    } catch (error) {
+      console.error("Error deploying server:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast({
+        title: 'Deployment Failed',
+        description: `Error deploying server: ${errorMessage}`,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  // Helper functions for API calls
+  const handleDeployUI = async (target: Target) => {
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const response = await fetch(`${API_BASE_URL}/api/deployment/pull-be-source?target_id=${target.id}`, {
@@ -367,10 +400,33 @@ export default function Home() {
                   transform: 'translateY(0)',
                 }}
                 transition="all 0.2s"
-                onClick={() => handleDeploy(target)}
+                onClick={() => handleDeployBE(target)}
                 fontWeight="semibold"
               >
-                Deploy
+                Deploy BE
+              </Button>
+              <Button
+                leftIcon={<MdCloudUpload size={24} color="white" />}
+                bgGradient="linear(135deg, yellow.400, orange.500)"
+                color="white"
+                size="sm"
+                height={"45px"}
+                width={"120px"}
+                fontSize={"md"}
+                borderRadius="xl"
+                _hover={{
+                  bgGradient: "linear(135deg, yellow.500, orange.600)",
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                }}
+                _active={{
+                  transform: 'translateY(0)',
+                }}
+                transition="all 0.2s"
+                onClick={() => handleDeployUI(target)}
+                fontWeight="semibold"
+              >
+                Deploy UI
               </Button>
               <Button
                 leftIcon={<MdPlayArrow size={24} color="white" />}

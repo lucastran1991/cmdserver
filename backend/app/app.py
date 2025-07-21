@@ -181,6 +181,7 @@ async def execute_command(
 async def pull_be_source(
     target_id: UUID,
     background_tasks: BackgroundTasks,
+    commit_id: Optional[str] = None,
     execute: bool = False,
     asynchronous: bool = False,
     current_user=Depends(current_active_user),
@@ -191,12 +192,27 @@ async def pull_be_source(
             config = await get_deployment_config(target_id, db)
             source_path = config["source"]
 
+            if not commit_id:
+                commit_id = "dev"  # Default to dev branch if no commit ID is provided
+
             commands = [
                 f"cd {source_path}/source_code/atprofveolia/",
-                "git checkout dev",
+                "git reset --hard",  # Reset to the latest commit
+                "git fetch",
+                f"git checkout {commit_id}",
                 "sleep 2",
                 "git pull",
                 f"cd {source_path}",
+                "mkdir -p temp_server",
+                f"rsync -av {source_path}/source_code/atprofveolia/server/ {source_path}/source_code/temp_server/",
+                "rm -rf source_code/temp_server/sff.sqldb.data/*",
+                "rm -rf source_code/temp_server/sff.auto.launch/*",
+                "rm -rf source_code/temp_server/spaces/reports/*",
+                "rm -rf source_code/temp_server/ui/*",
+                "rm -rf source_code/temp_server/config/*",
+                "rm -rf source_code/temp_server/spaces/*",
+                "rm -f *.log *.out *.sh *.cdm, *.py *.jar *.xml",
+                f"rsync -av {source_path}/source_code/temp_server/ {source_path}/server/"
             ]
             command = " && ".join(commands)
             pull_result = await execute_command(command, execute=execute)
@@ -290,7 +306,7 @@ async def pull_ui_source(
                 "sleep 2",
                 "git pull",
                 f"rm -rf {source_path}/server/ui/*",
-                f"rsync -av {source_path}/source_code/atprofveoliaui/api-1.0/ {source_path}/server/ui/",
+                f"rsync -av --exclude='config' {source_path}/source_code/atprofveoliaui/api-1.0/ {source_path}/server/ui/",
                 f"cd {source_path}",
             ]
             command = " && ".join(commands)

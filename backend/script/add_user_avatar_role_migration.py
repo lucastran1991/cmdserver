@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-Migration script to add avatar and role columns to the User table.
-Run this script after updating the User model to add the new fields.
-"""
-
 import asyncio
 import sys
 import os
@@ -16,8 +11,8 @@ from app.db import engine, async_session_maker
 
 
 async def migrate_user_table():
-    """Add avatar and role columns to the user table if they don't exist."""
-    
+    print("Adding 'full_name', 'avatar' and 'role' columns to User table...")
+
     async with engine.begin() as conn:
         # Check if full_name column exists
         result = await conn.execute(text(
@@ -68,7 +63,6 @@ async def migrate_user_table():
 
 
 async def main():
-    """Run the migration."""
     print("Starting User table migration...")
     print("Adding 'full_name', 'avatar' and 'role' columns to User table...")
 

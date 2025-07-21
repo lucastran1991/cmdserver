@@ -105,7 +105,7 @@ async def delete_target(target_id: uuid.UUID, db: AsyncSession = Depends(get_tar
 # Delete all targets
 @router.delete("/", response_model=dict)
 async def delete_all_targets(db: AsyncSession = Depends(get_target_db)):
-    """Delete all targets from the database."""
+    print("Deleting all targets...")
     stmt = select(Target)
     result = await db.execute(stmt)
     targets = result.scalars().all()

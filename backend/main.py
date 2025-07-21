@@ -8,7 +8,7 @@ config_path = os.path.join(os.path.dirname(__file__), "../../config.json")
 
 
 def check_port_available(host, port):
-    """Check if a port is available"""
+    print(f"Checking port {port} on {host}")
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.settimeout(1)
@@ -19,7 +19,7 @@ def check_port_available(host, port):
 
 
 def find_available_port(host, start_port, max_attempts=10):
-    """Find an available port starting from start_port"""
+    print(f"Finding available port starting from {start_port} on {host}")
     for i in range(max_attempts):
         port = start_port + i
         if check_port_available(host, port):
