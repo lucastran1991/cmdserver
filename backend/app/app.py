@@ -28,6 +28,9 @@ logging.basicConfig(
     format='[%(asctime)s] %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
     level=logging.INFO,
+    handlers=[
+        logging.StreamHandler()  # Output to stdout/stderr
+    ]
 )
 
 @asynccontextmanager
@@ -475,7 +478,7 @@ async def restart_server_task(
     start_astack_result = await execute_command(start_astack_cmd, execute)
 
     # Wait and start coengine
-    await asyncio.sleep(15)
+    await asyncio.sleep(20)
 
     coengine_cmd = f"cd {source_path} && nohup python {source_path}/pyastackcore/pyastackcore/co_engine.py > output.log &"
     start_coengine_result = await execute_command(coengine_cmd, execute)
