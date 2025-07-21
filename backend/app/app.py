@@ -465,20 +465,24 @@ async def restart_server_task(
     logging.info("Background task to restart server")
 
     # Kill existing process
+    logging.info("Killing existing server process")
     kill_astack_cmd = f"pwdx $(pidof java) 2>/dev/null | grep '{source_path}/server' | cut -d: -f1 | xargs -r kill"
     kill_astack_result = await execute_command(kill_astack_cmd, execute)
 
     # Kill co_engine process
+    logging.info("Killing co_engine process")
     kill_coengine_cmd = f"ps aux | grep '[p]ython.*{source_path}/pyastackcore' | awk '{{print $2}}' | xargs -r kill"
     kill_coengine_result = await execute_command(kill_coengine_cmd, execute)
 
     # Start server
+    logging.info("Starting server process")
     start_astack_cmd = f"cd {source_path}/server/ && nohup java @java-options.txt -jar tql.engine2.4.jar > nohup.out 2>&1 &"
     start_astack_result = await execute_command(start_astack_cmd, execute)
 
     # Wait and start coengine
     await asyncio.sleep(20)
 
+    logging.info("Starting co_engine process")
     coengine_cmd = f"cd {source_path} && nohup python {source_path}/pyastackcore/pyastackcore/co_engine.py > output.log &"
     start_coengine_result = await execute_command(coengine_cmd, execute)
 
