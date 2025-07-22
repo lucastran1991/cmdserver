@@ -3,7 +3,7 @@ import { Box, Text, Stack, Icon, HStack } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MdCheckCircleOutline } from "react-icons/md";
+import { FaCheck } from "react-icons/fa";
 import { useColorModeValue } from "@chakra-ui/react";
 
 const MotionText = motion(Text);
@@ -118,7 +118,7 @@ export default function LoadingScreen() {
               spacing={3}
             >
               <Icon 
-                as={MdCheckCircleOutline} 
+                as={FaCheck} 
                 color="blue.400" 
                 boxSize={6}
                 fontSize="xl"

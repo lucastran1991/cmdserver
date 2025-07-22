@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { act, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { API_ENDPOINTS } from "@/lib/api";
 import {
@@ -26,7 +26,16 @@ import {
   StatNumber,
   Progress,
   Switch,
-  IconButton
+  IconButton,
+  Modal,
+  Input,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure
 } from '@chakra-ui/react';
 import {
   MdArrowBack,
@@ -41,8 +50,13 @@ import {
   MdFolder,
   MdSchedule,
   MdLogout,
-  MdOutlineSdStorage
+  MdOutlineSdStorage,
+  MdTextFields
 } from 'react-icons/md';
+import {
+  IoIosCheckmark,
+  IoIosClose
+} from 'react-icons/io';
 import { useAuthStore } from '@/store/authStore';
 
 interface Target {
@@ -70,7 +84,10 @@ interface Target {
 
 export default function TargetDetails() {
   const { isAuthenticated, token, logout } = useAuthStore();
+  const { isOpen, onOpen, onClose } = useDisclosure()
   const [target, setTarget] = useState<Target | null>(null);
+  const [action, setAction] = useState("stop");
+  const [commitID, setCommitID] = useState<string | null>(null);
   const [isInit, setIsInit] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDebug, setIsDebug] = useState(false);
@@ -170,12 +187,18 @@ export default function TargetDetails() {
       let successMessage = '';
 
       switch (action) {
-        case 'deploy_be':
+        case 'deploy_backend':
           endpoint = `/api/deployment/pull-be-source?target_id=${target.id}&execute=${!isDebug}&asynchronous=true`;
+          if (commitID) {
+            endpoint += `&commit_id=${commitID}`;
+          }
           successMessage = `Deployment latest BE for ${target.name}`;
           break;
-        case 'deploy_ui':
+        case 'deploy_frontend':
           endpoint = `/api/deployment/pull-ui-source?target_id=${target.id}&execute=${!isDebug}`;
+          if (commitID) {
+            endpoint += `&commit_id=${commitID}`;
+          }
           successMessage = `Deployment latest UI for ${target.name}`;
           break;
         case 'start':
@@ -735,7 +758,10 @@ export default function TargetDetails() {
                       transform: 'translateY(0)',
                     }}
                     transition="all 0.2s"
-                    onClick={() => handleAction('deploy_be')}
+                    onClick={() => {
+                      setAction("deploy_backend");
+                      onOpen();
+                    }}
                     fontWeight="semibold"
                   >
                     Deploy BE
@@ -758,7 +784,10 @@ export default function TargetDetails() {
                       transform: 'translateY(0)',
                     }}
                     transition="all 0.2s"
-                    onClick={() => handleAction('deploy_ui')}
+                    onClick={() => {
+                      setAction("deploy_frontend");
+                      onOpen();
+                    }}
                     fontWeight="semibold"
                   >
                     Deploy UI
@@ -781,10 +810,13 @@ export default function TargetDetails() {
                       transform: 'translateY(0)',
                     }}
                     transition="all 0.2s"
-                    onClick={() => handleAction('start')}
+                    onClick={() => {
+                      setAction("start");
+                      onOpen();
+                    }}
                     fontWeight="semibold"
                   >
-                    Start
+                    Start Server
                   </Button>
                   <Button
                     leftIcon={<MdStop size={22} color="white" />}
@@ -804,10 +836,13 @@ export default function TargetDetails() {
                       transform: 'translateY(0)',
                     }}
                     transition="all 0.2s"
-                    onClick={() => handleAction('stop')}
+                    onClick={() => {
+                      setAction("stop");
+                      onOpen();
+                    }}
                     fontWeight="semibold"
                   >
-                    Stop
+                    Stop Server
                   </Button>
                 </VStack>
               </CardBody>
@@ -917,6 +952,86 @@ export default function TargetDetails() {
             </Box>
           </HStack>
         </Flex>
+
+        <Modal isOpen={isOpen} onClose={onClose} isCentered>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader textAlign="center" fontWeight="bold" textColor="white" bgGradient="linear(135deg, purple.600, pink.600, red.600)">
+              Execute Command
+            </ModalHeader>
+            <ModalHeader>
+              <Text color="gray.600">Server Action: {action}</Text>
+            </ModalHeader>
+            <ModalCloseButton textColor="white" />
+            {action === "deploy_backend" || action === "deploy_frontend" ? (
+              <ModalBody>
+                <Input
+                  placeholder="Enter commit ID (optional)"
+                  value={commitID || ""}
+                  onChange={(e) => {
+                    setCommitID(e.target.value)
+                  }}
+                />
+              </ModalBody>
+            ) : null}
+            <ModalFooter>
+              <HStack spacing={3} justify="center" w="full">
+                <Button
+                  leftIcon={<IoIosCheckmark size={24} color="white" />}
+                  bgGradient="linear(135deg, blue.400, green.500)"
+                  color="white"
+                  size="sm"
+                  height={"45px"}
+                  w="full"
+                  fontSize={"md"}
+                  borderRadius="xl"
+                  _hover={{
+                    bgGradient: "linear(135deg, blue.500, green.600)",
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                  }}
+                  _active={{
+                    transform: 'translateY(0)',
+                  }}
+                  transition="all 0.2s"
+                  onClick={() => {
+                    handleAction(action);
+                    onClose();
+                  }}
+                  fontWeight="semibold"
+                >
+                  Quất
+                </Button>
+                <Button
+                  leftIcon={<IoIosClose size={24} color="white" />}
+                  bgGradient="linear(135deg, red.400, pink.500)"
+                  color="white"
+                  size="sm"
+                  height={"45px"}
+                  w="full"
+                  fontSize={"md"}
+                  borderRadius="xl"
+                  _hover={{
+                    bgGradient: "linear(135deg, red.500, pink.600)",
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                  }}
+                  _active={{
+                    transform: 'translateY(0)',
+                  }}
+                  transition="all 0.2s"
+                  onClick={() => {
+                    setCommitID(null);
+                    onClose();
+                  }}
+                  fontWeight="semibold"
+                >
+                  Thôi bỏ
+                </Button>
+              </HStack>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
 
       </Container>
 
