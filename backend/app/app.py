@@ -202,16 +202,12 @@ async def pull_be_source(
 
             logging.info(f"Source Path: {source_path}, Commit ID: {commit_id}, Execute: {execute}, asynchronous: {asynchronous}")
 
-            if not commit_id:
-                commit_id = "dev"  # Default to dev branch if no commit ID is provided
-
             commands = [
                 f"cd {source_path}/source_code/atprofveolia/",
                 "git reset --hard",  # Reset to the latest commit
                 "git fetch",
-                f"git checkout {commit_id}",
-                "sleep 2",
-                "git pull",
+                f"git checkout {commit_id}" if commit_id else "git checkout dev",
+                f"sleep 2" if commit_id else "git pull",
                 f"cd {source_path}",
                 "mkdir -p source_code/temp_backend",
                 f"rsync -av {source_path}/source_code/atprofveolia/server/ {source_path}/source_code/temp_backend/",
@@ -285,18 +281,12 @@ async def pull_ui_source(
             config = await get_deployment_config(target_id, db)
             source_path = config["source"]
 
-            if not commit_id:
-                commit_id = (
-                    "build"  # Default to build branch if no commit ID is provided
-                )
-
             commands = [
                 f"cd {source_path}/source_code/atprofveoliaui/",
                 "git reset --hard",  # Reset to the latest commit
                 "git fetch",
-                f"git checkout {commit_id}",
-                "sleep 2",
-                "git pull",
+                f"git checkout {commit_id}" if commit_id else "git checkout build",
+                f"sleep 2" if commit_id else "git pull",
                 f"cd {source_path}",
                 "mkdir -p source_code/temp_frontend",
                 f"cp -R {source_path}/server/ui/config {source_path}/source_code/temp_frontend/",
@@ -305,6 +295,7 @@ async def pull_ui_source(
                 f"rsync -av {source_path}/source_code/temp_frontend/config/ {source_path}/server/ui/config/",
                 f"cd {source_path}",
             ]
+
             command = " && ".join(commands)
             result = await execute_command(command, execute)
 
