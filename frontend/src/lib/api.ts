@@ -1,9 +1,12 @@
+import { METHODS } from "http";
+
 // lib/api.ts - API configuration utility
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export const API_ENDPOINTS = {
   // Authentication
   LOGIN: `${API_BASE_URL}/auth/jwt/login`,
+  USERINFO: `${API_BASE_URL}/users/me`,
   LOGOUT: `${API_BASE_URL}/auth/jwt/logout`,
   REGISTER: `${API_BASE_URL}/auth/register`,
 

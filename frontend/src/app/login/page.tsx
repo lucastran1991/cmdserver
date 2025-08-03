@@ -93,6 +93,9 @@ const Login = () => {
         const token = data.access_token;
         console.log('Login successful:', data);
         setToken(data.access_token);
+        // Save the token
+
+        // Save user data if available in the response      
         toast({
           title: "Login successful!",
           description: "Welcome back to CMD Server.",
@@ -100,6 +103,37 @@ const Login = () => {
           duration: 2000,
           isClosable: true,
         });
+
+        const getUser = await fetch(API_ENDPOINTS.USERINFO, {
+          method: 'GET',
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        try {
+          const userData = await getUser.json();
+          if (getUser.ok) {
+            console.log('User data:', userData);
+            // Update auth store with user data
+            useAuthStore.setState(state => ({ ...state, user: userData }));
+            // Store in localStorage for persistence across sessions
+            localStorage.setItem('userData', JSON.stringify(userData));
+          } else {
+            console.error('Failed to fetch user data:', userData);
+            toast({
+              title: "Warning",
+              description: "Login successful, but couldn't load your profile data.",
+              status: "warning",
+              duration: 3000,
+              isClosable: true,
+            });
+          }
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+        }
+
         setTimeout(() => router.push('/preload'), 200);
       } else {
         setLoginError(data.detail || 'Login failed');

@@ -24,6 +24,7 @@ import {
 } from '@chakra-ui/react';
 import { MdStorage, MdLogout } from 'react-icons/md';
 import { useAuthStore } from '@/store/authStore';
+import Navbar from '@/components/Navbar';
 
 interface Target {
   id?: string | number;
@@ -77,13 +78,19 @@ export default function TargetsPage() {
       setIsInit(true);
     } catch (error) {
       console.error(error);
-      toast({
-        title: 'Error loading targets',
-        description: 'Failed to fetch target list. Please try again.',
-        status: 'error',
-        duration: 2000,
-        isClosable: true,
-      });
+      // Check if error is an HTTP 401 Unauthorized
+      if (error instanceof Response && error.status === 401) {
+        console.log("Unauthorized access, logging out");
+        logout(); // Clear auth store and set isAuthenticated to false
+      } else {
+        toast({
+          title: 'Error loading API',
+          description: 'Failed to fetch target list. Please try again.',
+          status: 'error',
+          duration: 2000,
+          isClosable: true,
+        });
+      }
       setIsInit(false);
     } finally {
       setIsLoading(false);
@@ -413,151 +420,154 @@ export default function TargetsPage() {
   }
 
   return (
-    <Box
-      minH="100vh"
-      bgGradient={bgGradient}
-      position="relative"
-      overflow="hidden"
-    >
-      {/* Animated background elements */}
+    <>
+      <Navbar />
       <Box
-        position="absolute"
-        top="5%"
-        left="5%"
-        w="400px"
-        h="400px"
-        bg="rgba(255, 255, 255, 0.05)"
-        borderRadius="50%"
-        animation="float 8s ease-in-out infinite"
-        zIndex={0}
-      />
-      <Box
-        position="absolute"
-        bottom="5%"
-        right="5%"
-        w="300px"
-        h="300px"
-        bg="rgba(255, 255, 255, 0.03)"
-        borderRadius="50%"
-        animation="float 10s ease-in-out infinite reverse"
-        zIndex={0}
-      />
+        minH="100vh"
+        bgGradient={bgGradient}
+        position="relative"
+        overflow="hidden"
+      >
+        {/* Animated background elements */}
+        <Box
+          position="absolute"
+          top="5%"
+          left="5%"
+          w="400px"
+          h="400px"
+          bg="rgba(255, 255, 255, 0.05)"
+          borderRadius="50%"
+          animation="float 8s ease-in-out infinite"
+          zIndex={0}
+        />
+        <Box
+          position="absolute"
+          bottom="5%"
+          right="5%"
+          w="300px"
+          h="300px"
+          bg="rgba(255, 255, 255, 0.03)"
+          borderRadius="50%"
+          animation="float 10s ease-in-out infinite reverse"
+          zIndex={0}
+        />
 
-      {!isInit ? (
-        <VStack spacing={4}>
-          <Spinner
-            size="xl"
-            color="purple.500"
-            thickness="4px"
-            speed="0.65s"
-          />
-          <Text color="gray.500" fontSize="lg">
-            Loading...
-          </Text>
-        </VStack>
-      ) : (
-        <Container maxW="6xl" p={6} position="relative" zIndex={1}>
-          {/* Header */}
-          <VStack spacing={8} mb={10}>
-            <Flex
-              direction={{ base: 'column', md: 'row' }}
-              align="center"
-              // justify="space-between"
-              w="full"
-              gap={4}
-            >
-              <Heading
-                size="2xl"
-                bgGradient="linear(135deg, blue.200, yellow.500, red.400)"
-                bgClip="text"
-                fontWeight="bold"
-                textAlign={{ base: 'center', md: 'left' }}
-              >
-                A-Stack Instances
-              </Heading>
-              {targetList.length > 0 ? (
-                <Badge
-                  bgGradient="linear(135deg, blue.200, purple.200, pink.200)"
-                  color="purple.900"
-                  borderRadius="full"
-                  px={6}
-                  py={2}
-                  fontSize="md"
-                  fontWeight="bold"
-                  textAlign="center"
-                  animation="bounce 2s infinite"
-                >
-                  {targetList.filter(target => target.server_status === true).length} Active
-                </Badge>) : <></>}
-            </Flex>
+        {!isInit ? (
+          <VStack spacing={4}>
+            <Spinner
+              size="xl"
+              color="purple.500"
+              thickness="4px"
+              speed="0.65s"
+            />
+            <Text color="gray.500" fontSize="lg">
+              Loading...
+            </Text>
           </VStack>
-          <Box position="fixed" top={6} right={6} zIndex={50}>
-            <Button
-              leftIcon={<MdLogout size={20} />}
-              bgGradient="linear(135deg, purple.600, pink.600, red.600)"
-              color="white"
-              size="lg"
-              borderRadius="xl"
-              boxShadow="0 10px 25px rgba(0, 0, 0, 0.2)"
-              _hover={{
-                bgGradient: "linear(135deg, red.500, pink.500, purple.500)",
-                transform: 'scale(1.05)',
-                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.3)',
-              }}
-              _active={{
-                transform: 'scale(0.95)',
-              }}
-              transition="all 0.2s"
-              onClick={handleLogout}
-              fontWeight="bold"
-              animation="pulse 2s infinite"
-            >
-              Mời về cho
-            </Button>
-          </Box>
-
-          {targetList.length > 0 ? (
-            <Box w="full">
-              {renderTargetCards()}
-            </Box>
-          ) : (
-            <Center minH="50vh">
-              <VStack spacing={6}>
-                <Box
-                  w="120px"
-                  h="120px"
-                  bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                  borderRadius="50%"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  boxShadow="0 15px 35px rgba(102, 126, 234, 0.4)"
-                  animation="float 3s ease-in-out infinite"
+        ) : (
+          <Container maxW="6xl" p={6} position="relative" zIndex={1}>
+            {/* Header */}
+            <VStack spacing={8} mb={10}>
+              <Flex
+                direction={{ base: 'column', md: 'row' }}
+                align="center"
+                // justify="space-between"
+                w="full"
+                gap={4}
+              >
+                <Heading
+                  size="2xl"
+                  bgGradient="linear(135deg, blue.200, yellow.500, red.400)"
+                  bgClip="text"
+                  fontWeight="bold"
+                  textAlign={{ base: 'center', md: 'left' }}
                 >
-                  <Text fontSize="4xl" color="white">
-                    📦
-                  </Text>
-                </Box>
-                <VStack spacing={2} textAlign="center">
-                  <Heading
-                    size="xl"
-                    color="white"
+                  A-Stack Instances
+                </Heading>
+                {targetList.length > 0 ? (
+                  <Badge
+                    bgGradient="linear(135deg, blue.200, purple.200, pink.200)"
+                    color="purple.900"
+                    borderRadius="full"
+                    px={6}
+                    py={2}
+                    fontSize="md"
                     fontWeight="bold"
+                    textAlign="center"
+                    animation="bounce 2s infinite"
                   >
-                    No targets found
-                  </Heading>
-                  <Text
-                    fontSize="lg"
-                    color="whiteAlpha.700"
+                    {targetList.filter(target => target.server_status === true).length} Active
+                  </Badge>) : <></>}
+              </Flex>
+            </VStack>
+            {/* <Box position="fixed" top={6} right={6} zIndex={50}>
+              <Button
+                leftIcon={<MdLogout size={20} />}
+                bgGradient="linear(135deg, purple.600, pink.600, red.600)"
+                color="white"
+                size="lg"
+                borderRadius="xl"
+                boxShadow="0 10px 25px rgba(0, 0, 0, 0.2)"
+                _hover={{
+                  bgGradient: "linear(135deg, red.500, pink.500, purple.500)",
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 15px 35px rgba(0, 0, 0, 0.3)',
+                }}
+                _active={{
+                  transform: 'scale(0.95)',
+                }}
+                transition="all 0.2s"
+                onClick={handleLogout}
+                fontWeight="bold"
+                animation="pulse 2s infinite"
+              >
+                Mời về cho
+              </Button>
+            </Box> */}
+
+            {targetList.length > 0 ? (
+              <Box w="full">
+                {renderTargetCards()}
+              </Box>
+            ) : (
+              <Center minH="50vh">
+                <VStack spacing={6}>
+                  <Box
+                    w="120px"
+                    h="120px"
+                    bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                    borderRadius="50%"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    boxShadow="0 15px 35px rgba(102, 126, 234, 0.4)"
+                    animation="float 3s ease-in-out infinite"
                   >
-                    Try adding a new target or check your connection.
-                  </Text>
+                    <Text fontSize="4xl" color="white">
+                      📦
+                    </Text>
+                  </Box>
+                  <VStack spacing={2} textAlign="center">
+                    <Heading
+                      size="xl"
+                      color="white"
+                      fontWeight="bold"
+                    >
+                      No targets found
+                    </Heading>
+                    <Text
+                      fontSize="lg"
+                      color="whiteAlpha.700"
+                    >
+                      Try adding a new target or check your connection.
+                    </Text>
+                  </VStack>
                 </VStack>
-              </VStack>
-            </Center>
-          )}
-        </Container>
-      )}
-    </Box>
+              </Center>
+            )}
+          </Container>
+        )}
+      </Box>
+    </>
   );
 }

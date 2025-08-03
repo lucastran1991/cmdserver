@@ -68,9 +68,10 @@ class CustomJWTStrategy(JWTStrategy[models.UP, models.ID]):
 
         # Check if user already has a valid token
         if user_id in active_tokens:
-            token_data = active_tokens[user_id]
-            if datetime.now() < token_data["expires_at"]:
-                return token_data["token"]
+            return active_tokens[user_id]["token"]
+            # token_data = active_tokens[user_id]
+            # if datetime.now() < token_data["expires_at"]:
+            #     return token_data["token"]
 
         # Generate new token
         token = await super().write_token(user)
