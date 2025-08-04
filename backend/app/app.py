@@ -785,7 +785,7 @@ async def get_target_logs(target_id: UUID, lines: int = 10):
             source_path = config["source"]
 
         if not source_path:
-            log_path = "out.log"
+            log_path = os.path.join(os.getcwd(), "out.log")
         else:
             log_path = f"{source_path}/server/nohup.out"
 

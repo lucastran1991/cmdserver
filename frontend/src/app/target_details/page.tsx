@@ -174,7 +174,7 @@ export default function TargetDetails() {
 
   useEffect(() => {
     fetchLogs();
-    const interval = setInterval(fetchLogs, 5000); // Poll every 5s
+    const interval = setInterval(fetchLogs, 2000); // Poll every 2s
     return () => clearInterval(interval);
   }, [target?.id]);
 
@@ -705,11 +705,27 @@ export default function TargetDetails() {
                 border="1px solid rgba(255, 255, 255, 0.2)"
               >
                 <CardHeader>
-                  <HStack>
-                    <Icon as={MdMonitor} color="orange.400" boxSize={6} />
-                    <Heading size="md" color={textColor}>
-                      Recent Logs
-                    </Heading>
+                  <HStack justify="space-between" w="full">
+                    <HStack>
+                      <Icon as={MdMonitor} color="orange.400" boxSize={6} />
+                      <Heading size="md" color={textColor}>
+                        Recent Logs
+                      </Heading>
+                    </HStack>
+                    <IconButton
+                      aria-label="Refresh Logs"
+                      icon={<MdRefresh size={20} color="white" />}
+                      colorScheme="orange"
+                      variant="solid"
+                      size="sm"
+                      onClick={fetchLogs}
+                      isRound
+                      _hover={{
+                        bg: "orange.500",
+                        transform: "scale(1.1)",
+                      }}
+                      transition="all 0.2s"
+                    />
                   </HStack>
                 </CardHeader>
                 <CardBody pt={0}>
