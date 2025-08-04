@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel, UUID4
 from typing import Optional, Dict, Any, AsyncGenerator
 from datetime import datetime
@@ -26,11 +26,12 @@ import logging
 import sys
 
 logging.basicConfig(
-    format='[%(asctime)s] %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
+    format="[%(asctime)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
     level=logging.INFO,
-    handlers=[logging.StreamHandler(sys.stdout)]
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -200,7 +201,9 @@ async def pull_be_source(
             config = await get_deployment_config(target_id, db)
             source_path = config["source"]
 
-            logging.info(f"Source Path: {source_path}, Commit ID: {commit_id}, Execute: {execute}, asynchronous: {asynchronous}")
+            logging.info(
+                f"Source Path: {source_path}, Commit ID: {commit_id}, Execute: {execute}, asynchronous: {asynchronous}"
+            )
 
             commands = [
                 f"cd {source_path}/source_code/atprofveolia/",
@@ -767,6 +770,30 @@ async def get_deployment_status(
                 ),
                 "last_updated": datetime.now().isoformat(),
             }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+
+@app.get("/targets/{target_id}/logs")
+async def get_target_logs(target_id: UUID, lines: int = 10):
+    logging.info("Tail the logs with the last {lines} lines")
+
+    try:
+        async for db in get_async_session():
+            config = await get_deployment_config(target_id, db)
+            source_path = config["source"]
+
+        # if not source_path:
+        source_path = "/Users/mac/studio/atprofveolia"
+
+        log_path = f"{source_path}/server/nohup.out"
+        if not os.path.exists(log_path):
+            return JSONResponse(content={"logs": ["Log file not found."]})
+        with open(log_path, "r") as f:
+            all_lines = f.readlines()
+            recent_lines = all_lines[-lines:]
+        return JSONResponse(content={"logs": recent_lines})
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")

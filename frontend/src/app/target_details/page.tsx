@@ -162,6 +162,22 @@ export default function TargetDetails() {
     }
   };
 
+  const fetchLogs = async () => {
+    if (!target?.id) return;
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const response = await fetch(`${API_BASE_URL}/targets/${target.id}/logs?lines=10`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await response.json();
+    setTarget(prev => prev ? { ...prev, logs: data.logs } : prev);
+  };
+
+  useEffect(() => {
+    fetchLogs();
+    const interval = setInterval(fetchLogs, 5000); // Poll every 5s
+    return () => clearInterval(interval);
+  }, [target?.id]);
+
   const handleRefresh = () => {
     setIsLoading(true);
     fetchTargetDetails();
