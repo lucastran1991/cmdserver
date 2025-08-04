@@ -784,10 +784,11 @@ async def get_target_logs(target_id: UUID, lines: int = 10):
             config = await get_deployment_config(target_id, db)
             source_path = config["source"]
 
-        # if not source_path:
-        source_path = "/Users/mac/studio/atprofveolia"
+        if not source_path:
+            log_path = "out.log"
+        else:
+            log_path = f"{source_path}/server/nohup.out"
 
-        log_path = f"{source_path}/server/nohup.out"
         if not os.path.exists(log_path):
             return JSONResponse(content={"logs": ["Log file not found."]})
         with open(log_path, "r") as f:
