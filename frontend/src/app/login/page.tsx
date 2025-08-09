@@ -33,8 +33,8 @@ import { useAuthStore } from '@/store/authStore';
 
 const Login = () => {
   const { setToken } = useAuthStore();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('admin@mail.com');
+  const [password, setPassword] = useState('admin');
   const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -93,22 +93,10 @@ const Login = () => {
         const token = data.access_token;
         console.log('Login successful:', data);
         setToken(data.access_token);
-        // Save the token
-
-        // Save user data if available in the response      
-        toast({
-          title: "Login successful!",
-          description: "Welcome back to CMD Server.",
-          status: "success",
-          duration: 2000,
-          isClosable: true,
-        });
-
         const getUser = await fetch(API_ENDPOINTS.USERINFO, {
           method: 'GET',
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -120,6 +108,16 @@ const Login = () => {
             useAuthStore.setState(state => ({ ...state, user: userData }));
             // Store in localStorage for persistence across sessions
             localStorage.setItem('userData', JSON.stringify(userData));
+
+            toast({
+              title: "Login successful!",
+              description: "Welcome back to CMD Server.",
+              status: "success",
+              duration: 2000,
+              isClosable: true,
+            });
+            setTimeout(() => router.push('/preload'), 200);
+            
           } else {
             console.error('Failed to fetch user data:', userData);
             toast({
@@ -133,8 +131,6 @@ const Login = () => {
         } catch (error) {
           console.error('Error parsing user data:', error);
         }
-
-        setTimeout(() => router.push('/preload'), 200);
       } else {
         setLoginError(data.detail || 'Login failed');
         toast({
