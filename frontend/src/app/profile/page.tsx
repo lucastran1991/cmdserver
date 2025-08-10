@@ -30,6 +30,7 @@ import {
   Divider,
   useColorModeValue,
 } from '@chakra-ui/react';
+import Navbar from '@/components/Navbar';
 
 interface UserData {
   id: string;
@@ -200,185 +201,187 @@ export default function ProfilePage() {
   }
 
   return (
-    <Box minH="100vh" bgGradient={bgGradient} py={12} px={2} position="relative">
-      {/* Animated background elements */}
-      <Box
-        position="absolute"
-        top="10%"
-        left="10%"
-        w="300px"
-        h="300px"
-        bg="rgba(255,255,255,0.1)"
-        borderRadius="50%"
-        animation="float 6s ease-in-out infinite"
-        zIndex={0}
-      />
-      <Box
-        position="absolute"
-        bottom="10%"
-        right="10%"
-        w="200px"
-        h="200px"
-        bg="rgba(255,255,255,0.05)"
-        borderRadius="50%"
-        animation="float 8s ease-in-out infinite reverse"
-        zIndex={0}
-      />
+    <>
+      <Navbar />
+      <Box minH="100vh" bgGradient={bgGradient} py={12} px={2} position="relative">
+        {/* Animated background elements */}
+        <Box
+          position="absolute"
+          top="10%"
+          left="10%"
+          w="300px"
+          h="300px"
+          bg="rgba(255,255,255,0.1)"
+          borderRadius="50%"
+          animation="float 6s ease-in-out infinite"
+          zIndex={0}
+        />
+        <Box
+          position="absolute"
+          bottom="10%"
+          right="10%"
+          w="200px"
+          h="200px"
+          bg="rgba(255,255,255,0.05)"
+          borderRadius="50%"
+          animation="float 8s ease-in-out infinite reverse"
+          zIndex={0}
+        />
 
-      <Container maxW="container.md" zIndex={1} position="relative">
-        <Card
-          variant="elevated"
-          bg={cardBg}
-          borderRadius="2xl"
-          boxShadow="0 25px 50px -12px rgba(0,0,0,0.25)"
-          border="1px solid rgba(255,255,255,0.2)"
-          p={8}
-        >
-          <CardBody>
-            <VStack spacing={6} align="center">
-              <Box position="relative">
-                <Avatar
-                  src={user?.avatar?.toString() || '/default-avatar.png'}
-                  name={user?.username?.toString() || 'User'}
-                  size="2xl"
-                  mb={2}
-                  boxShadow="0 8px 20px rgba(102,126,234,0.4)"
-                  border="4px solid"
-                  borderColor={useColorModeValue('purple.400', 'purple.600')}
-                  animation="pulse 2s infinite"
-                />
-                <Badge
-                  position="absolute"
-                  bottom={2}
-                  right={-2}
-                  colorScheme={user?.is_active ? "green" : "red"}
-                  fontSize="sm"
-                  px={3}
-                  py={1}
-                  borderRadius="full"
-                  boxShadow="md"
-                >
-                  {user?.is_active ? "Active" : "Inactive"}
-                </Badge>
-              </Box>
-              <Heading size="lg" color={textColor}>
-                {(user?.full_name?.toString() || user?.username?.toString() || 'User')}
-              </Heading>
-              <Text color="gray.500" fontSize="md">
-                {user?.email}
-              </Text>
-              <HStack spacing={4}>
-                {user?.role && (
-                  <Badge colorScheme="purple" fontSize="sm" px={3} py={1} borderRadius="full">
-                    {user.role}
+        <Container maxW="container.md" zIndex={1} position="relative">
+          <Card
+            variant="elevated"
+            bg={cardBg}
+            borderRadius="2xl"
+            boxShadow="0 25px 50px -12px rgba(0,0,0,0.25)"
+            border="1px solid rgba(255,255,255,0.2)"
+            p={8}
+          >
+            <CardBody>
+              <VStack spacing={6} align="center">
+                <Box position="relative">
+                  <Avatar
+                    src={user?.avatar?.toString() || '/avatar/avatar (33).jpeg'}
+                    name={user?.username?.toString() || 'User'}
+                    size="2xl"
+                    mb={2}
+                    boxShadow="0 8px 20px rgba(102,126,234,0.4)"
+                    border="4px solid"
+                    borderColor={useColorModeValue('purple.400', 'purple.600')}
+                    animation="pulse 2s infinite"
+                  />
+                  <Badge
+                    position="absolute"
+                    bottom={2}
+                    right={-2}
+                    colorScheme={user?.is_active ? "green" : "red"}
+                    fontSize="sm"
+                    px={3}
+                    py={1}
+                    borderRadius="full"
+                    boxShadow="md"
+                  >
+                    {user?.is_active ? "Active" : "Inactive"}
                   </Badge>
-                )}
-                {Boolean(user?.is_superuser) && (
-                  <Badge colorScheme="yellow" fontSize="sm" px={3} py={1} borderRadius="full">
-                    Admin
-                  </Badge>
-                )}
-                {Boolean(user?.is_verified) && (
-                  <Badge colorScheme="blue" fontSize="sm" px={3} py={1} borderRadius="full">
-                    Verified
-                  </Badge>
-                )}
-              </HStack>
-              <Divider my={4} />
-              <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
-                <Grid templateColumns="repeat(12, 1fr)" gap={6}>
-                  <GridItem colSpan={12}>
-                    <Controller
-                      name="fullName"
-                      control={control}
-                      render={({ field, fieldState }) => (
-                        <FormControl isInvalid={!!fieldState.error}>
-                          <FormLabel>Full Name</FormLabel>
-                          <Input {...field} placeholder="Enter your full name" />
-                          <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
-                        </FormControl>
-                      )}
-                    />
-                  </GridItem>
-                  <GridItem colSpan={12}>
-                    <Controller
-                      name="username"
-                      control={control}
-                      render={({ field, fieldState }) => (
-                        <FormControl isInvalid={!!fieldState.error}>
-                          <FormLabel>Username</FormLabel>
-                          <Input {...field} placeholder="Enter username" />
-                          <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
-                        </FormControl>
-                      )}
-                    />
-                  </GridItem>
-                  <GridItem colSpan={12}>
-                    <Controller
-                      name="email"
-                      control={control}
-                      render={({ field, fieldState }) => (
-                        <FormControl isInvalid={!!fieldState.error}>
-                          <FormLabel>Email</FormLabel>
-                          <Input {...field} type="email" placeholder="Enter email" />
-                          <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
-                        </FormControl>
-                      )}
-                    />
-                  </GridItem>
-                  <GridItem colSpan={12}>
-                    <Controller
-                      name="bio"
-                      control={control}
-                      render={({ field, fieldState }) => (
-                        <FormControl isInvalid={!!fieldState.error}>
-                          <FormLabel>Bio</FormLabel>
-                          <Textarea {...field} placeholder="Enter a short bio" rows={4} />
-                          <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
-                        </FormControl>
-                      )}
-                    />
-                  </GridItem>
-                  <GridItem colSpan={12}>
-                    <Controller
-                      name="avatarUrl"
-                      control={control}
-                      render={({ field, fieldState }) => (
-                        <FormControl isInvalid={!!fieldState.error}>
-                          <FormLabel>Avatar URL</FormLabel>
-                          <Input {...field} placeholder="Enter URL to your profile image" />
-                          <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
-                        </FormControl>
-                      )}
-                    />
-                  </GridItem>
-                  <GridItem colSpan={12}>
-                    <Flex justify="center" mt={4}>
-                      <Button
-                        type="submit"
-                        isLoading={updating}
-                        loadingText="Updating"
-                        px={8}
-                        colorScheme="purple"
-                        borderRadius="xl"
-                        boxShadow="0 8px 20px rgba(102,126,234,0.2)"
-                        _hover={{
-                          bgGradient: "linear(135deg, purple.500, pink.500)",
-                          transform: 'scale(1.05)',
-                        }}
-                        transition="all 0.2s"
-                      >
-                        Update Profile
-                      </Button>
-                    </Flex>
-                  </GridItem>
-                </Grid>
-              </form>
-            </VStack>
-          </CardBody>
-        </Card>
-      </Container>
-      <style jsx global>{`
+                </Box>
+                <Heading size="lg" color={textColor}>
+                  {(user?.full_name?.toString() || user?.username?.toString() || 'User')}
+                </Heading>
+                <Text color="gray.500" fontSize="md">
+                  {user?.email}
+                </Text>
+                <HStack spacing={4}>
+                  {user?.role && (
+                    <Badge colorScheme="purple" fontSize="sm" px={3} py={1} borderRadius="full">
+                      {user.role}
+                    </Badge>
+                  )}
+                  {Boolean(user?.is_superuser) && (
+                    <Badge colorScheme="yellow" fontSize="sm" px={3} py={1} borderRadius="full">
+                      Admin
+                    </Badge>
+                  )}
+                  {Boolean(user?.is_verified) && (
+                    <Badge colorScheme="blue" fontSize="sm" px={3} py={1} borderRadius="full">
+                      Verified
+                    </Badge>
+                  )}
+                </HStack>
+                <Divider my={4} />
+                <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
+                  <Grid templateColumns="repeat(12, 1fr)" gap={6}>
+                    <GridItem colSpan={12}>
+                      <Controller
+                        name="fullName"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                          <FormControl isInvalid={!!fieldState.error}>
+                            <FormLabel>Full Name</FormLabel>
+                            <Input {...field} placeholder="Enter your full name" />
+                            <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
+                          </FormControl>
+                        )}
+                      />
+                    </GridItem>
+                    <GridItem colSpan={12}>
+                      <Controller
+                        name="username"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                          <FormControl isInvalid={!!fieldState.error}>
+                            <FormLabel>Username</FormLabel>
+                            <Input {...field} placeholder="Enter username" />
+                            <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
+                          </FormControl>
+                        )}
+                      />
+                    </GridItem>
+                    <GridItem colSpan={12}>
+                      <Controller
+                        name="email"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                          <FormControl isInvalid={!!fieldState.error}>
+                            <FormLabel>Email</FormLabel>
+                            <Input {...field} type="email" placeholder="Enter email" />
+                            <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
+                          </FormControl>
+                        )}
+                      />
+                    </GridItem>
+                    <GridItem colSpan={12}>
+                      <Controller
+                        name="bio"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                          <FormControl isInvalid={!!fieldState.error}>
+                            <FormLabel>Bio</FormLabel>
+                            <Textarea {...field} placeholder="Enter a short bio" rows={4} />
+                            <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
+                          </FormControl>
+                        )}
+                      />
+                    </GridItem>
+                    <GridItem colSpan={12}>
+                      <Controller
+                        name="avatarUrl"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                          <FormControl isInvalid={!!fieldState.error}>
+                            <FormLabel>Avatar URL</FormLabel>
+                            <Input {...field} placeholder="Enter URL to your profile image" />
+                            <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
+                          </FormControl>
+                        )}
+                      />
+                    </GridItem>
+                    <GridItem colSpan={12}>
+                      <Flex justify="center" mt={4}>
+                        <Button
+                          type="submit"
+                          isLoading={updating}
+                          loadingText="Updating"
+                          px={8}
+                          colorScheme="purple"
+                          borderRadius="xl"
+                          boxShadow="0 8px 20px rgba(102,126,234,0.2)"
+                          _hover={{
+                            bgGradient: "linear(135deg, purple.500, pink.500)",
+                            transform: 'scale(1.05)',
+                          }}
+                          transition="all 0.2s"
+                        >
+                          Update Profile
+                        </Button>
+                      </Flex>
+                    </GridItem>
+                  </Grid>
+                </form>
+              </VStack>
+            </CardBody>
+          </Card>
+        </Container>
+        <style jsx global>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-20px); }
@@ -388,6 +391,7 @@ export default function ProfilePage() {
           50% { transform: scale(1.05); }
         }
       `}</style>
-    </Box>
+      </Box>
+    </>
   );
 }

@@ -25,8 +25,9 @@ import { useAuthStore } from '@/store/authStore';
 import { MdLogout, MdPermDataSetting, MdStorage } from 'react-icons/md';
 
 const Links = [
-  { name: 'Home', href: '/home' },
   { name: 'Targets', href: '/targets' },
+  { name: 'Check List', href: '/checklist' },
+  { name: 'Profile', href: '/profile' },
 ];
 
 const NavLink = ({ children, href }: { children: React.ReactNode; href: string }) => {
@@ -85,13 +86,13 @@ export default function Navbar() {
                 Lucas's Playground
               </Text>
             </Box>
-            {/* <HStack as={'nav'} spacing={4} display={{ base: 'none', md: 'flex' }}>
+            <HStack as={'nav'} spacing={4} display={{ base: 'none', md: 'flex' }}>
               {isAuthenticated && Links.map((link) => (
                 <NavLink key={link.name} href={link.href}>
                   {link.name}
                 </NavLink>
               ))}
-            </HStack> */}
+            </HStack>
           </HStack>
           <Flex alignItems={'center'}>
             <Button onClick={toggleColorMode} mr={3}>
