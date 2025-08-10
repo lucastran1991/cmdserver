@@ -116,8 +116,7 @@ const Login = () => {
               duration: 2000,
               isClosable: true,
             });
-            // setTimeout(() => router.push('/preload'), 200);
-            router.push('/profile');
+            setTimeout(() => router.push('/preload'), 200);
             
           } else {
             console.error('Failed to fetch user data:', userData);

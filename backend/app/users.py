@@ -79,7 +79,7 @@ class CustomJWTStrategy(JWTStrategy[models.UP, models.ID]):
         # Store token in cache
         active_tokens[user_id] = {
             "token": token,
-            "expires_at": datetime.now() + timedelta(seconds=self.lifetime_seconds),
+            "expires_at": datetime.now() + timedelta(days=365),
         }
 
         return token

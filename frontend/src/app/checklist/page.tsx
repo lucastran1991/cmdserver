@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -15,64 +15,27 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import Navbar from "@/components/Navbar";
+import { log } from 'console';
 
-// Dummy data for demonstration
-const organizations = ["Org A", "Org B", "Org C"];
-
-const enterprises: { [key: string]: string[] } = {
-  "Org A": ["Ent A1", "Ent A2"],
-  "Org B": ["Ent B1", "Ent B2"],
-  "Org C": ["Ent C1", "Ent C2"],
-};
-
-const plants: { [key: string]: string[] } = {
-  "Ent A1": ["Plant A1-1", "Plant A1-2"],
-  "Ent B1": ["Plant B1-1", "Plant B1-2"],
-  "Ent C1": ["Plant C1-1", "Plant C1-2"],
-  // ... add more as needed
-};
-
-// Dummy checklist items
-const checklistItems = [
-  { id: 1, title: "Check Pump", status: "Done", description: "Pump is operational." },
-  { id: 2, title: "Inspect Valve", status: "Pending", description: "Valve needs inspection." },
-  { id: 3, title: "Review Logs", status: "Done", description: "Logs reviewed." },
-  { id: 4, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 5, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 6, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 7, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 8, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 9, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 10, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 11, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 12, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 13, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 14, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 15, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 16, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 17, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 18, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 19, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 20, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 21, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 22, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 23, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 24, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 25, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 26, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 27, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 28, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 29, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 30, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 31, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 32, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." },
-  { id: 33, title: "Test Sensor", status: "Pending", description: "Sensor test scheduled." }
-];
+const server_ports = ["8686", "8091", "8090"];
+type OrgType = { id: string; name: string; type: string };
+type EntType = { id: string; name: string; type: string };
+type PlantType = { id: string; name: string; type: string };
+type TopologyType = { id: string; name: string; type: string };
+type ComponentType = { id: string; name: string; type: string };
 
 export default function ChecklistPage() {
+  const [selectedPort, setSelectedPort] = useState("");
   const [selectedOrg, setSelectedOrg] = useState("");
   const [selectedEnt, setSelectedEnt] = useState("");
   const [selectedPlant, setSelectedPlant] = useState("");
+  const [selectedTopology, setSelectedTopology] = useState("");
+
+  const [serverOrgs, setServerOrgs] = useState<OrgType[]>([]);
+  const [serverEnts, setServerEnts] = useState<EntType[]>([]);
+  const [serverPlants, setServerPlants] = useState<PlantType[]>([]);
+  const [serverTopologies, setServerTopologies] = useState<TopologyType[]>([]);
+  const [serverComponents, setServerComponents] = useState<ComponentType[]>([]);
 
   const bgGradient = useColorModeValue(
     "linear(135deg, blue.400 0%, purple.500 50%, pink.400 100%)",
@@ -82,8 +45,279 @@ export default function ChecklistPage() {
   const textColor = useColorModeValue("gray.800", "white");
 
   // Filter checklist items based on selections (replace with real API logic)
-  const filteredItems =
-    selectedOrg && selectedEnt && selectedPlant ? checklistItems : [];
+  type ChecklistItem = { id: string; name: string, type: string };
+  const checklistItems: ChecklistItem[] = [
+    { id: "1", name: "Check Pump", type: "Topology" },
+    { id: "2", name: "Inspect Valve", type: "Topology" },
+    { id: "3", name: "Review Logs", type: "Topology" },
+    { id: "4", name: "Test Sensor", type: "Topology" }
+  ];
+
+  const filteredItems: ChecklistItem[] =
+    serverTopologies.length > 0
+      ? serverTopologies as any
+      : serverPlants.length > 0
+      ? serverPlants as any
+      : serverEnts.length > 0
+      ? serverEnts as any
+      : serverOrgs.length > 0
+      ? serverOrgs as any
+      : [];
+
+  useEffect(() => {
+    if (selectedPort) {
+      fetchOrganizationList(selectedPort);
+    }
+  }, [selectedPort]);
+
+  const handlePortChange = (port: string) => {
+    console.log("Selected Port:", port);
+    setSelectedPort(port);
+    setSelectedOrg("");
+    setSelectedEnt("");
+    setSelectedPlant("");
+    setSelectedTopology("");
+    setServerOrgs([]);
+    setServerEnts([]);
+    setServerPlants([]);
+    setServerTopologies([]);
+    fetchOrganizationList(port);
+  };
+
+  const handleOrgsChange = (org: OrgType) => {
+    console.log("Selected Organization:", org);
+    setSelectedOrg(org.id);
+    setSelectedEnt("");
+    setSelectedPlant("");
+    setSelectedTopology("");
+    setServerEnts([]);
+    setServerPlants([]);
+    setServerTopologies([]);
+    fetchEnterpriseList(org.id);
+  };
+
+  const handleEntsChange = (ent: EntType) => {
+    console.log("Selected Enterprise:", ent);
+    setSelectedEnt(ent.id);
+    setSelectedPlant("");
+    setServerPlants([]);
+    setSelectedTopology("");
+    setServerTopologies([]);
+    fetchPlantList(selectedOrg);
+  };
+
+  const handlePlantsChange = (plant: PlantType) => {
+    console.log("Selected Plant:", plant);
+    setSelectedPlant(plant.id);
+    setSelectedTopology("");
+    setServerTopologies([]);
+    fetchTopologies(selectedOrg);
+  };
+
+  const handleTopologiesChange = (topology: TopologyType) => {
+    console.log("Selected Topology:", topology);
+    setSelectedTopology(topology.id);
+  };
+
+  const fetchOrganizationList = async (port: string) => {
+    if (!port) return;
+    try {
+      const API_BASE_URL = (process.env.NEXT_PUBLIC_HOST || "http://localhost") + ":" + port;
+      const response = await fetch(`${API_BASE_URL}/fid-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain'
+        },
+        body: `
+    #
+  scope(fid: DBU-LOCAL):
+    find:
+      only: id,name
+      orderBy: name asc
+      Organization:
+        id:
+          ne: ''
+    `
+      });
+
+      const data = await response.json();
+      if (
+        data &&
+        data.find &&
+        data.find.Status === "Success" &&
+        Array.isArray(data.find.Result)
+      ) {
+        const orgs: OrgType[] = [];
+        data.find.Result.forEach((item: any) => {
+          if (item.Organization?.id && item.Organization?.name) {
+            orgs.push({
+              id: item.Organization.id,
+              name: item.Organization.name,
+              type: "Organization",
+            });
+          }
+        });
+        setServerOrgs(orgs);
+        console.log("Fetched Organizations:", orgs);
+      }
+    } catch (error) {
+      console.error('Get Organization failed:', error);
+    }
+  };
+
+  const fetchEnterpriseList = async (orgId: string) => {
+    if (!orgId || !selectedPort) return;
+    try {
+      const API_BASE_URL = (process.env.NEXT_PUBLIC_HOST || "http://localhost") + ":" + selectedPort;
+      const response = await fetch(`${API_BASE_URL}/fid-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain'
+        },
+        body: `
+    #
+  scope(fid: ${orgId}):
+    find:
+      only: id,enterpriseName
+      orderBy: enterpriseName asc
+      Enterprise:
+        id:
+          ne: ''
+    `
+      });
+
+      const data = await response.json();
+      if (
+        data &&
+        data.find &&
+        data.find.Status === "Success" &&
+        data.find.Result
+      ) {
+        const ents: EntType[] = [];
+        if (Array.isArray(data.find.Result)) {
+          data.find.Result.forEach((item: any) => {
+            if (item.Enterprise?.id && item.Enterprise?.enterpriseName) {
+              ents.push({
+                id: item.Enterprise.id,
+                name: item.Enterprise.enterpriseName,
+                type: "Enterprise",
+              });
+            }
+          });
+        } else if (data.find.Result.Enterprise?.id && data.find.Result.Enterprise?.enterpriseName) {
+          ents.push({
+            id: data.find.Result.Enterprise.id,
+            name: data.find.Result.Enterprise.enterpriseName,
+            type: "Enterprise",
+          });
+        }
+        setServerEnts(ents);
+        console.log("Fetched Enterprises:", ents);
+      }
+    } catch (error) {
+      console.error('Get Enterprise failed:', error);
+    }
+  };
+
+  const fetchPlantList = async (orgId: string) => {
+    if (!orgId || !selectedPort) return;
+    try {
+      const API_BASE_URL = (process.env.NEXT_PUBLIC_HOST || "http://localhost") + ":" + selectedPort;
+      const response = await fetch(`${API_BASE_URL}/fid-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain'
+        },
+        body: `
+    #
+  scope(fid: ${orgId}):
+    find:
+      only: id,plantName
+      orderBy: plantName asc
+      Plant:
+        id:
+          ne: ''
+    `
+      });
+
+      const data = await response.json();
+      if (
+        data &&
+        data.find &&
+        data.find.Status === "Success" &&
+        Array.isArray(data.find.Result)
+      ) {
+        const plants: PlantType[] = [];
+        data.find.Result.forEach((item: any) => {
+          if (item.Plant?.id && item.Plant?.plantName) {
+            plants.push({
+              id: item.Plant.id,
+              name: item.Plant.plantName,
+              type: "Plant",
+            });
+          }
+        });
+        setServerPlants(plants);
+        console.log("Fetched Plants:", plants);
+      }
+    } catch (error) {
+      console.error('Get Plant failed:', error);
+    }
+  };
+
+  const fetchTopologies = async (orgId: string) => {
+    if (!orgId || !selectedPort) return;
+    try {
+      const API_BASE_URL = (process.env.NEXT_PUBLIC_HOST || "http://localhost") + ":" + selectedPort;
+      const response = await fetch(`${API_BASE_URL}/fid-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain'
+        },
+        body: `
+    #
+  scope(fid: ${orgId}):
+    find:
+      only: id,plantTopologyName
+      orderBy: plantTopologyName asc
+      PlantTopology:
+        id:
+          ne: ''
+    `
+      });
+
+      const data = await response.json();
+      if (
+        data &&
+        data.find &&
+        data.find.Status === "Success" &&
+        Array.isArray(data.find.Result)
+      ) {
+        const topologies: TopologyType[] = [];
+        if (Array.isArray(data.find.Result)) {
+          data.find.Result.forEach((item: any) => {
+            if (item.PlantTopology?.id && item.PlantTopology?.plantTopologyName) {
+              topologies.push({
+                id: item.PlantTopology.id,
+                name: item.PlantTopology.plantTopologyName,
+                type: "Topology",
+              });
+            }
+          });
+        } else if (data.find.Result.PlantTopology?.id && data.find.Result.PlantTopology?.plantTopologyName) {
+          topologies.push({
+            id: data.find.Result.PlantTopology.id,
+            name: data.find.Result.PlantTopology.plantTopologyName,
+            type: "Topology",
+          });
+        }
+        setServerTopologies(topologies);
+        console.log("Fetched Topologies:", topologies);
+      }
+    } catch (error) {
+      console.error('Get Topology failed:', error);
+    }
+  };
 
   return (
     <>
@@ -117,33 +351,53 @@ export default function ChecklistPage() {
           <VStack spacing={8} align="stretch">
             <Heading
               size="xl"
-              bgGradient="linear(135deg, blue.400, purple.500, pink.400)"
-              bgClip="text"
-              fontWeight="bold"
+              textColor={'white'}
+              fontWeight="extrabold"
               textAlign="center"
+              letterSpacing="wide"
+              textShadow="0 2px 8px rgba(0,0,0,0.25)"
             >
-              Checklist
+              Search for server Entities
             </Heading>
             <Flex
               gap={4}
-              direction={{ base: "column", md: "row" }}              
+              direction={{ base: "column", md: "row" }}
               justify="center"
             >
               <Select
-                placeholder="Select Organization"
-                value={selectedOrg}
+                placeholder="Select Server Port"
+                value={selectedPort}
                 onChange={(e) => {
-                  setSelectedOrg(e.target.value);
-                  setSelectedEnt("");
-                  setSelectedPlant("");
+                  handlePortChange(e.target.value)
                 }}
                 bg={cardBg}
                 color={textColor}
                 fontWeight="bold"
               >
-                {organizations.map((org) => (
-                  <option key={org} value={org}>
-                    {org}
+                {server_ports.map((port) => (
+                  <option key={port} value={port}>
+                    {port}
+                  </option>
+                ))}
+              </Select>
+
+              <Select
+                placeholder="Select Organization"
+                value={selectedOrg}
+                onChange={(e) => {
+                  const selected = serverOrgs.find(
+                    (org) => org.id === e.target.value
+                  );
+                  if (selected) handleOrgsChange(selected);
+                }}
+                bg={cardBg}
+                color={textColor}
+                fontWeight="bold"
+                isDisabled={!selectedPort}
+              >
+                {serverOrgs.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.name}
                   </option>
                 ))}
               </Select>
@@ -151,8 +405,10 @@ export default function ChecklistPage() {
                 placeholder="Select Enterprise"
                 value={selectedEnt}
                 onChange={(e) => {
-                  setSelectedEnt(e.target.value);
-                  setSelectedPlant("");
+                  const selected = serverEnts.find(
+                    (ent) => ent.id === e.target.value
+                  );
+                  if (selected) handleEntsChange(selected);
                 }}
                 bg={cardBg}
                 color={textColor}
@@ -160,78 +416,89 @@ export default function ChecklistPage() {
                 isDisabled={!selectedOrg}
               >
                 {selectedOrg &&
-                  enterprises[selectedOrg]?.map((ent) => (
-                    <option key={ent} value={ent}>
-                      {ent}
+                  serverEnts.map((ent) => (
+                    <option key={ent.id} value={ent.id}>
+                      {ent.name}
                     </option>
                   ))}
               </Select>
               <Select
                 placeholder="Select Plant"
                 value={selectedPlant}
-                onChange={(e) => setSelectedPlant(e.target.value)}
+                onChange={(e) => {
+                  const selected = serverPlants.find(
+                    (plant) => plant.id === e.target.value
+                  );
+                  if (selected) handlePlantsChange(selected);
+                }}
                 bg={cardBg}
                 color={textColor}
                 fontWeight="bold"
                 isDisabled={!selectedEnt}
               >
                 {selectedEnt &&
-                  plants[selectedEnt]?.map((plant) => (
-                    <option key={plant} value={plant}>
-                      {plant}
+                  serverPlants.map((plant) => (
+                    <option key={plant.id} value={plant.id}>
+                      {plant.name}
                     </option>
                   ))}
               </Select>
             </Flex>
-
-            <SimpleGrid columns={{ base: 1, md: 2, lg: 5 }} spacing={6} mt={6}>
-              {filteredItems.length === 0 ? (
-              <Text color={textColor} fontSize="lg" textAlign="center" gridColumn="1/-1">
-                Please select Organization, Enterprise, and Plant to view checklist.
-              </Text>
-              ) : (
-              filteredItems.map((item) => (
-                <Card
-                key={item.id}
-                bg={cardBg}
-                borderRadius="2xl"
-                boxShadow="0 10px 25px rgba(0,0,0,0.15)"
-                border="1px solid rgba(255,255,255,0.2)"
-                p={6}
-                >
-                <CardBody>
-                  <VStack align="start" spacing={3}>
-                  <Heading size="md" color={textColor}>
-                    {item.title}
-                  </Heading>
-                  <Badge
-                    colorScheme={item.status === "Done" ? "green" : "yellow"}
-                    borderRadius="full"
-                    px={4}
-                    py={1}
-                    fontWeight="bold"
-                    fontSize="sm"
+            {/* Checklist items rendered below the dropdowns */}
+            <Box mt={8}>
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={5}>
+                {filteredItems.map((item) => (
+                  <Card
+                    key={item.id}
+                    bg={cardBg}
+                    borderRadius="xl"
+                    boxShadow="0 12px 32px rgba(80,0,120,0.18)"
+                    border="2px solid"
+                    borderColor="purple.300"
+                    p={2}
+                    transition="transform 0.2s"
+                    _hover={{
+                      transform: "scale(1.04)",
+                      boxShadow: "0 16px 40px rgba(120,0,180,0.22)",
+                      borderColor: "pink.400",
+                    }}
                   >
-                    {item.status}
-                  </Badge>
-                  <Text color="gray.500" fontSize="sm">
-                    {item.description}
-                  </Text>
-                  </VStack>
-                </CardBody>
-                </Card>
-              ))
-              )}
-            </SimpleGrid>
-          </VStack>
-        </Container>
-        <style jsx global>{`
+                    <CardBody>
+                      <VStack align="center" spacing={2}>
+                        <Heading size="md" color="red.600" letterSpacing="wide">
+                          {item.type.toUpperCase()}
+                        </Heading>
+                        <Heading size="md" color="blue.600" letterSpacing="wide">
+                          {item.name}
+                        </Heading>                        
+                        <Flex w="100%" justify="center">
+                          <Badge
+                          colorScheme="green"
+                          borderRadius="full"
+                          px={4}
+                          py={2}
+                          fontWeight="bold"
+                          fontSize="sm"
+                          boxShadow="0 2px 8px rgba(120,0,180,0.12)"
+                          >
+                          {item.id}
+                          </Badge>
+                        </Flex>
+                      </VStack>
+                    </CardBody>
+                  </Card>
+                ))}
+              </SimpleGrid>
+            </Box>
+        </VStack>
+      </Container>
+      <style jsx global>{`
           @keyframes float {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-20px); }
           }
         `}</style>
-      </Box>
+    </Box >
     </>
   );
 }
