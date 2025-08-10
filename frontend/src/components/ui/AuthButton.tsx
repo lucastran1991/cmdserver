@@ -1,15 +1,24 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useAuthStore } from "@/store/authStore";
+import { useRouter } from "next/navigation";
 
 export default function AuthButton() {
-  const { data: session } = useSession();
+  const { isAuthenticated, user, logout } = useAuthStore();
+  const router = useRouter();
 
-  if (session) {
+  if (isAuthenticated) {
     return (
       <div>
-        <p>Welcome, {session.user?.name}</p>
-        <button onClick={() => signOut()}>Sign out</button>
+        <p>Welcome!</p>
+        <button
+          onClick={() => {
+            logout();
+            router.push("/login");
+          }}
+        >
+          Sign out
+        </button>
       </div>
     );
   }
