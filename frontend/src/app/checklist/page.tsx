@@ -13,6 +13,7 @@ import {
   Badge,
   useColorModeValue,
   Flex,
+  useToast
 } from "@chakra-ui/react";
 import Navbar from "@/components/Navbar";
 import { log } from 'console';
@@ -37,6 +38,8 @@ export default function ChecklistPage() {
   const [serverTopologies, setServerTopologies] = useState<TopologyType[]>([]);
   const [serverComponents, setServerComponents] = useState<ComponentType[]>([]);
 
+  const toast = useToast();
+
   const bgGradient = useColorModeValue(
     "linear(135deg, blue.400 0%, purple.500 50%, pink.400 100%)",
     "linear(135deg, blue.600 0%, purple.700 50%, pink.600 100%)"
@@ -57,12 +60,12 @@ export default function ChecklistPage() {
     serverTopologies.length > 0
       ? serverTopologies as any
       : serverPlants.length > 0
-      ? serverPlants as any
-      : serverEnts.length > 0
-      ? serverEnts as any
-      : serverOrgs.length > 0
-      ? serverOrgs as any
-      : [];
+        ? serverPlants as any
+        : serverEnts.length > 0
+          ? serverEnts as any
+          : serverOrgs.length > 0
+            ? serverOrgs as any
+            : [];
 
   useEffect(() => {
     if (selectedPort) {
@@ -463,25 +466,37 @@ export default function ChecklistPage() {
                       borderColor: "pink.400",
                     }}
                   >
-                    <CardBody>
+                    <CardBody
+                      onClick={() => {
+                        navigator.clipboard.writeText(item.id);
+                        toast({
+                          title: "Copy ID",
+                          description: "You have copied the ID to clipboard.",
+                          status: "info",
+                          duration: 1000,
+                          isClosable: true,
+                        });
+                      }}
+                      cursor="pointer"
+                    >
                       <VStack align="center" spacing={2}>
                         <Heading size="md" color="red.600" letterSpacing="wide">
                           {item.type.toUpperCase()}
                         </Heading>
                         <Heading size="md" color="blue.600" letterSpacing="wide">
                           {item.name}
-                        </Heading>                        
+                        </Heading>
                         <Flex w="100%" justify="center">
                           <Badge
-                          colorScheme="green"
-                          borderRadius="full"
-                          px={4}
-                          py={2}
-                          fontWeight="bold"
-                          fontSize="sm"
-                          boxShadow="0 2px 8px rgba(120,0,180,0.12)"
+                            colorScheme="green"
+                            borderRadius="full"
+                            px={4}
+                            py={2}
+                            fontWeight="bold"
+                            fontSize="sm"
+                            boxShadow="0 2px 8px rgba(120,0,180,0.12)"
                           >
-                          {item.id}
+                            {item.id}
                           </Badge>
                         </Flex>
                       </VStack>
@@ -490,15 +505,15 @@ export default function ChecklistPage() {
                 ))}
               </SimpleGrid>
             </Box>
-        </VStack>
-      </Container>
-      <style jsx global>{`
+          </VStack>
+        </Container>
+        <style jsx global>{`
           @keyframes float {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-20px); }
           }
         `}</style>
-    </Box >
+      </Box >
     </>
   );
 }
