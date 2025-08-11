@@ -454,14 +454,14 @@ export default function ChecklistPage() {
               </Select>
             </Flex>
 
-            <Box mt={4}>
+            <Box mt={4} height={44} maxW="250px">
               <input
               type="text"
               placeholder="Search by name..."
               style={{
                 width: "100%",
                 padding: "12px",
-                borderRadius: "8px",
+                borderRadius: "22px",
                 border: "1px solid #ccc",
                 fontSize: "16px",
                 marginBottom: "8px"
