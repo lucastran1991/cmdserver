@@ -16,7 +16,6 @@ import {
   useToast
 } from "@chakra-ui/react";
 import Navbar from "@/components/Navbar";
-import { log } from 'console';
 
 const server_ports = ["8686", "8091", "8090"];
 type OrgType = { id: string; name: string; type: string };
@@ -51,12 +50,6 @@ export default function ChecklistPage() {
 
   // Filter checklist items based on selections (replace with real API logic)
   type ChecklistItem = { id: string; name: string, type: string };
-  const checklistItems: ChecklistItem[] = [
-    { id: "1", name: "Check Pump", type: "Topology" },
-    { id: "2", name: "Inspect Valve", type: "Topology" },
-    { id: "3", name: "Review Logs", type: "Topology" },
-    { id: "4", name: "Test Sensor", type: "Topology" }
-  ];
 
   const filteredItems: ChecklistItem[] =
     serverTopologies.length > 0
@@ -82,6 +75,7 @@ export default function ChecklistPage() {
     setSelectedEnt("");
     setSelectedPlant("");
     setSelectedTopology("");
+    setSearchTerm("");
     setServerOrgs([]);
     setServerEnts([]);
     setServerPlants([]);
@@ -95,6 +89,7 @@ export default function ChecklistPage() {
     setSelectedEnt("");
     setSelectedPlant("");
     setSelectedTopology("");
+    setSearchTerm("");
     setServerEnts([]);
     setServerPlants([]);
     setServerTopologies([]);
@@ -105,8 +100,9 @@ export default function ChecklistPage() {
     console.log("Selected Enterprise:", ent);
     setSelectedEnt(ent.id);
     setSelectedPlant("");
-    setServerPlants([]);
     setSelectedTopology("");
+    setSearchTerm("");
+    setServerPlants([]);
     setServerTopologies([]);
     fetchPlantList(selectedOrg);
   };
@@ -115,12 +111,14 @@ export default function ChecklistPage() {
     console.log("Selected Plant:", plant);
     setSelectedPlant(plant.id);
     setSelectedTopology("");
+    setSearchTerm("");
     setServerTopologies([]);
-    fetchTopologies(selectedOrg);
+    fetchTopologies(selectedOrg, plant.id);
   };
 
   const handleTopologiesChange = (topology: TopologyType) => {
     console.log("Selected Topology:", topology);
+    setSearchTerm("");
     setSelectedTopology(topology.id);
   };
 
@@ -250,18 +248,26 @@ export default function ChecklistPage() {
         data &&
         data.find &&
         data.find.Status === "Success" &&
-        Array.isArray(data.find.Result)
+        data.find.Result
       ) {
         const plants: PlantType[] = [];
-        data.find.Result.forEach((item: any) => {
-          if (item.Plant?.id && item.Plant?.plantName) {
-            plants.push({
-              id: item.Plant.id,
-              name: item.Plant.plantName,
-              type: "Plant",
-            });
-          }
-        });
+        if (Array.isArray(data.find.Result)) {
+          data.find.Result.forEach((item: any) => {
+            if (item.Plant?.id && item.Plant?.plantName) {
+              plants.push({
+                id: item.Plant.id,
+                name: item.Plant.plantName,
+                type: "Plant",
+              });
+            }
+          });
+        } else if (data.find.Result.Plant?.id && data.find.Result.Plant?.plantName) {
+          plants.push({
+            id: data.find.Result.Plant.id,
+            name: data.find.Result.Plant.plantName,
+            type: "Plant",
+          });
+        }
         setServerPlants(plants);
         console.log("Fetched Plants:", plants);
       }
@@ -270,8 +276,13 @@ export default function ChecklistPage() {
     }
   };
 
-  const fetchTopologies = async (orgId: string) => {
+  const fetchTopologies = async (orgId: string, plantId: string) => {
     if (!orgId || !selectedPort) return;
+    if (!plantId) {
+      console.warn("No plant selected, clearing topologies.");
+      setServerTopologies([]);
+      return;
+    }
     try {
       const API_BASE_URL = (process.env.NEXT_PUBLIC_HOST || "http://localhost") + ":" + selectedPort;
       const response = await fetch(`${API_BASE_URL}/fid-auth`, {
@@ -287,16 +298,15 @@ export default function ChecklistPage() {
       orderBy: plantTopologyName asc
       PlantTopology:
         target:
-          in: ${selectedPlant || ''}
+          in: ${plantId}
     `
       });
-
       const data = await response.json();
       if (
         data &&
         data.find &&
         data.find.Status === "Success" &&
-        Array.isArray(data.find.Result)
+        data.find.Result
       ) {
         const topologies: TopologyType[] = [];
         if (Array.isArray(data.find.Result)) {
@@ -454,12 +464,12 @@ export default function ChecklistPage() {
               </Select>
             </Flex>
 
-            <Box mt={4} height={44} maxW="250px">
+            <Flex mt={4} align="center" justify="center">
               <input
               type="text"
               placeholder="Search by name..."
               style={{
-                width: "100%",
+                width: "300px",
                 padding: "12px",
                 borderRadius: "22px",
                 border: "1px solid #ccc",
@@ -469,67 +479,67 @@ export default function ChecklistPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               />
-            </Box>
+            </Flex>
 
-            <Box mt={8}>
+            <Box mt={4}>
               <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={5}>
                 {filteredItems
                   .filter(item =>
                     item.name.toLowerCase().includes(searchTerm.toLowerCase())
                   )
                   .map((item) => (
-                  <Card
-                    key={item.id}
-                    bg={cardBg}
-                    borderRadius="xl"
-                    boxShadow="0 12px 32px rgba(80,0,120,0.18)"
-                    border="2px solid"
-                    borderColor="purple.300"
-                    p={2}
-                    transition="transform 0.2s"
-                    _hover={{
-                      transform: "scale(1.04)",
-                      boxShadow: "0 16px 40px rgba(120,0,180,0.22)",
-                      borderColor: "pink.400",
-                    }}
-                  >
-                    <CardBody
-                      onClick={() => {
-                        navigator.clipboard.writeText(item.id);
-                        toast({
-                          title: "Copy ID",
-                          description: "You have copied the ID to clipboard.",
-                          status: "info",
-                          duration: 1000,
-                          isClosable: true,
-                        });
+                    <Card
+                      key={item.id}
+                      bg={cardBg}
+                      borderRadius="xl"
+                      boxShadow="0 12px 32px rgba(80,0,120,0.18)"
+                      border="2px solid"
+                      borderColor="purple.300"
+                      p={2}
+                      transition="transform 0.2s"
+                      _hover={{
+                        transform: "scale(1.04)",
+                        boxShadow: "0 16px 40px rgba(120,0,180,0.22)",
+                        borderColor: "pink.400",
                       }}
-                      cursor="pointer"
                     >
-                      <VStack align="center" spacing={2}>
-                        <Heading size="md" color="red.600" letterSpacing="wide">
-                          {item.type.toUpperCase()}
-                        </Heading>
-                        <Heading size="md" color="blue.600" letterSpacing="wide">
-                          {item.name}
-                        </Heading>
-                        <Flex w="100%" justify="center">
-                          <Badge
-                            colorScheme="green"
-                            borderRadius="full"
-                            px={4}
-                            py={2}
-                            fontWeight="bold"
-                            fontSize="sm"
-                            boxShadow="0 2px 8px rgba(120,0,180,0.12)"
-                          >
-                            {item.id}
-                          </Badge>
-                        </Flex>
-                      </VStack>
-                    </CardBody>
-                  </Card>
-                ))}
+                      <CardBody
+                        onClick={() => {
+                          navigator.clipboard.writeText(item.id);
+                          toast({
+                            title: "Copy ID",
+                            description: "You have copied the ID to clipboard.",
+                            status: "info",
+                            duration: 1000,
+                            isClosable: true,
+                          });
+                        }}
+                        cursor="pointer"
+                      >
+                        <VStack align="center" spacing={2}>
+                          <Heading size="md" color="red.600" letterSpacing="wide">
+                            {item.type.toUpperCase()}
+                          </Heading>
+                          <Heading size="md" color="blue.600" letterSpacing="wide">
+                            {item.name}
+                          </Heading>
+                          <Flex w="100%" justify="center">
+                            <Badge
+                              colorScheme="green"
+                              borderRadius="full"
+                              px={4}
+                              py={2}
+                              fontWeight="bold"
+                              fontSize="sm"
+                              boxShadow="0 2px 8px rgba(120,0,180,0.12)"
+                            >
+                              {item.id}
+                            </Badge>
+                          </Flex>
+                        </VStack>
+                      </CardBody>
+                    </Card>
+                  ))}
               </SimpleGrid>
             </Box>
           </VStack>
