@@ -32,6 +32,8 @@ export default function ChecklistPage() {
   const [selectedPlant, setSelectedPlant] = useState("");
   const [selectedTopology, setSelectedTopology] = useState("");
 
+  const [searchTerm, setSearchTerm] = useState("");
+
   const [serverOrgs, setServerOrgs] = useState<OrgType[]>([]);
   const [serverEnts, setServerEnts] = useState<EntType[]>([]);
   const [serverPlants, setServerPlants] = useState<PlantType[]>([]);
@@ -284,8 +286,8 @@ export default function ChecklistPage() {
       only: id,plantTopologyName
       orderBy: plantTopologyName asc
       PlantTopology:
-        id:
-          ne: ''
+        target:
+          in: ${selectedPlant || ''}
     `
       });
 
@@ -319,6 +321,10 @@ export default function ChecklistPage() {
       }
     } catch (error) {
       console.error('Get Topology failed:', error);
+    }
+
+    const setSearchTerm = (term: string) => {
+      setSearchTerm(term);
     }
   };
 
@@ -447,10 +453,31 @@ export default function ChecklistPage() {
                   ))}
               </Select>
             </Flex>
-            {/* Checklist items rendered below the dropdowns */}
+
+            <Box mt={4}>
+              <input
+              type="text"
+              placeholder="Search by name..."
+              style={{
+                width: "100%",
+                padding: "12px",
+                borderRadius: "8px",
+                border: "1px solid #ccc",
+                fontSize: "16px",
+                marginBottom: "8px"
+              }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </Box>
+
             <Box mt={8}>
               <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={5}>
-                {filteredItems.map((item) => (
+                {filteredItems
+                  .filter(item =>
+                    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((item) => (
                   <Card
                     key={item.id}
                     bg={cardBg}
