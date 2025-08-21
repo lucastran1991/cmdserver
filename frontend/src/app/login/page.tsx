@@ -116,17 +116,16 @@ const Login = () => {
               duration: 2000,
               isClosable: true,
             });
-            setTimeout(() => router.push('/preload'), 200);
-            
+
           } else {
             console.error('Failed to fetch user data:', userData);
-            toast({
-              title: "Warning",
-              description: "Login successful, but couldn't load your profile data.",
-              status: "warning",
-              duration: 3000,
-              isClosable: true,
-            });
+            // toast({
+            //   title: "Warning",
+            //   description: "Login successful, but couldn't load your profile data.",
+            //   status: "warning",
+            //   duration: 3000,
+            //   isClosable: true,
+            // });
           }
         } catch (error) {
           console.error('Error parsing user data:', error);
@@ -141,6 +140,9 @@ const Login = () => {
           isClosable: true,
         });
       }
+
+      setTimeout(() => router.push('/8686'), 200);
+
     } catch (error) {
       console.error('Login failed:', error);
       setLoginError('Login failed. Please try again.');
